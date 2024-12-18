@@ -129,6 +129,60 @@
             background: #e8f5e9;
             margin-right: 20px;
         }
+
+        @keyframes pulseReady {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reopen-btn {
+            background: #1DB954;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 15px auto;
+            display: block;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .reopen-btn:hover:not(:disabled) {
+            background: #1ed760;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .reopen-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .reopen-btn.ready {
+            animation: fadeIn 0.5s ease-out, pulseReady 2s infinite ease-in-out;
+        }
+
+        .countdown {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+
+        .countdown.complete {
+            color: #1DB954;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>

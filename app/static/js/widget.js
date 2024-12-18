@@ -168,12 +168,11 @@ class SpotifyChatWidget {
         const message = input.value.trim();
         
         if (!message) return;
-
+    
         try {
-            // Add user message to chat
             this.addMessage(message, 'user');
             input.value = '';
-
+    
             const response = await fetch('/api/v1/chat', {
                 method: 'POST',
                 headers: {
@@ -184,13 +183,112 @@ class SpotifyChatWidget {
                     message: message
                 }),
             });
-
+    
             const data = await response.json();
             this.addMessage(data.message, 'bot');
+    
+            // Handle chat ending if user chose to end
+            if (data.debug_info && data.debug_info.choice === "end_chat") {
+                this.endChat();
+            }
         } catch (error) {
             console.error('Error sending message:', error);
             this.addMessage('Sorry, an error occurred. Please try again.', 'bot');
         }
+    }
+
+    endChat() {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.querySelector('.message-input');
+        messageInput.style.display = 'none';
+        
+        // Add reopen button when chat ends
+        this.addReopenButton();
+        
+        // Optional: Add a message that chat has ended
+        const endMessage = document.createElement('div');
+        endMessage.classList.add('chat-message', 'system-message');
+        endMessage.textContent = 'Chat ended. Support team will contact you soon.';
+        chatMessages.appendChild(endMessage);
+    }
+
+
+    addReopenButton() {
+        const container = document.createElement('div');
+        container.className = 'reopen-container';
+    
+        const button = document.createElement('button');
+        button.textContent = 'Reopen Chat';
+        button.className = 'reopen-btn';
+        button.disabled = true;
+    
+        const countdownDiv = document.createElement('div');
+        countdownDiv.className = 'countdown';
+        
+        container.appendChild(button);
+        container.appendChild(countdownDiv);
+        document.getElementById('chatMessages').appendChild(container);
+    
+        // Set countdown time (5 minutes = 300 seconds)
+        let timeLeft = 300;
+        
+        const updateCountdown = () => {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            countdownDiv.textContent = `Can reopen chat in ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 0) {
+                button.disabled = false;
+                countdownDiv.textContent = 'You can now reopen the chat';
+                countdownDiv.classList.add('complete');
+                button.classList.add('ready'); // Add ready class for animation
+                clearInterval(timer);
+    
+                // Add attention-grabbing effect
+                button.addEventListener('mouseleave', () => {
+                    // Reset animation
+                    button.style.animation = 'none';
+                    button.offsetHeight; // Trigger reflow
+                    button.style.animation = null;
+                });
+            }
+            timeLeft--;
+        };
+    
+        // Start countdown
+        updateCountdown();
+        const timer = setInterval(updateCountdown, 1000);
+    
+        button.onclick = async () => {
+            try {
+                button.disabled = true; // Prevent double-clicks
+                button.textContent = 'Reopening...';
+                
+                const response = await fetch('/api/v1/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: this.userId,
+                        message: '/reopen'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.debug_info.chat_reopened) {
+                    container.style.animation = 'fadeOut 0.3s ease-out forwards';
+                    setTimeout(() => {
+                        document.querySelector('.message-input').style.display = 'flex';
+                        container.remove();
+                        this.addMessage("Chat reopened. How can I help you?", 'bot');
+                    }, 300);
+                }
+            } catch (error) {
+                console.error('Error reopening chat:', error);
+                this.addMessage('Sorry, an error occurred while trying to reopen the chat.', 'bot');
+                button.disabled = false;
+                button.textContent = 'Reopen Chat';
+            }
+        };
     }
 
     addMessage(message, type) {

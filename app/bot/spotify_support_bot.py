@@ -15,7 +15,11 @@ class SpotifySupportBot:
 
         # Initialize user state
         self.user_states = {}
-        
+        self.tickets_created = set()  # Track users with created tickets
+        self.failed_ticket_attempts = set()
+
+
+
         # Enhanced decision tree with more common Spotify issues
         self.decision_tree = {
             "root": {
@@ -86,6 +90,12 @@ class SpotifySupportBot:
 
     def get_response(self, user_id, user_input):
         """Main function to process user input and return appropriate response"""
+        if user_input.lower() == '/reopen':
+            if user_id in self.tickets_created:
+                self.user_states[user_id]['chat_ended'] = False
+                return "Chat reopened. How can I help you?", {"chat_reopened": True}
+            return "No previous chat found to reopen.", {"error": "no_chat_to_reopen"}
+        
         # Get user state from memory first, then from database if not in memory
         if user_id not in self.user_states:
             user_state = self.auth.get_user_state(user_id)
@@ -97,6 +107,18 @@ class SpotifySupportBot:
                     'current_node': 'root',
                     'awaiting_choice': False
                 }
+                
+                # If awaiting choice for ticket
+        if self.user_states[user_id].get('awaiting_choice'):
+            if user_input.strip() == '1':
+                self.user_states[user_id]['awaiting_choice'] = False
+                return "Thank you. Our support team will contact you soon. Chat ended.", {"choice": "end_chat"}
+            elif user_input.strip() == '2':
+                self.user_states[user_id]['awaiting_choice'] = False
+                return "Okay, let's continue chatting. How else can I help you?", {"choice": "continue_chat"}
+            else:
+                return "Please type '1' to end chat or '2' to continue chatting.", {"awaiting_choice": True}
+        
         
         # Analyze sentiment
         sentiment = self.analyze_sentiment(user_input)
@@ -121,18 +143,25 @@ class SpotifySupportBot:
         }
         
         # Check if we need to create a support ticket
-        if self.user_states[user_id]['frustration_count'] >= 3:
+        if (self.user_states[user_id]['frustration_count'] >= 3 and 
+            user_id not in self.tickets_created and 
+            user_id not in self.failed_ticket_attempts):  # Add this check
+            
             ticket_created = self.create_support_ticket(user_id)
-            debug_info["ticket_created"] = ticket_created
-            response = """I notice you're having difficulties. I've escalated this to our support team - they'll contact you soon to help resolve your issue.
+            if ticket_created:
+                self.tickets_created.add(user_id)
+                self.user_states[user_id]['awaiting_choice'] = True
+                debug_info["ticket_created"] = True
+                response = """I notice you're having difficulties. I've escalated this to our support team - they'll contact you soon to help resolve your issue.
 
-    Would you like to:
-    1. End this chat and wait for support team
-    2. Continue chatting with me
+Would you like to:
+1. End this chat and wait for support team
+2. Continue chatting with me
 
-    Please type '1' or '2' to choose."""
-            self.user_states[user_id]['awaiting_choice'] = True
-            debug_info["awaiting_choice"] = True
+Please type '1' or '2' to choose."""
+            else:
+                self.failed_ticket_attempts.add(user_id)  # Mark as failed
+                response = "I'm here to help you directly. What seems to be the problem?"
         else:
             # Get response for normal flow
             if closest_issue and closest_issue in self.decision_tree['root']['children']:
