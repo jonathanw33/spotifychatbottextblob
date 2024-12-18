@@ -25,21 +25,110 @@ class SpotifySupportBot:
             "root": {
                 "text": "What kind of issue are you experiencing?",
                 "children": {
-                    "cant_login": {
-                        "text": "Having trouble logging in?",
-                        "responses": {
-                            "regular": "Let's verify your login credentials. First, check if your username and password are correct. If you're using Facebook/Google login, try logging in directly through that service.",
-                            "frustrated": "I understand login issues can be very frustrating. Let's solve this together step by step. First, let's verify your login method and credentials."
-                        },
-                        "keywords": ["login", "cant login", "password", "forgot password", "authentication", "sign in", "signup", "register"]
+                    "account_access": {
+                        "text": "Having trouble accessing your account?",
+                        "children": {
+                            "cant_login": {
+                                "text": "Unable to log in to your account?",
+                                "responses": {
+                                    "regular": "Let's get you back into your account. Try these steps:\n1. Double-check your username/email and password\n2. Clear your browser cookies and cache\n3. Try the 'Forgot Password' option\n4. If using Facebook/Google login, try logging in directly through that service\n\nStill no luck? I can help you contact our support team.",
+                                    "frustrated": "I understand how frustrating it is to be locked out of your account. Don't worry - we'll get this sorted out together. Let's try these proven solutions:\n1. First, let's verify your login credentials\n2. We'll clear your browser data for a fresh start\n3. If needed, we can easily reset your password\n\nI'm here to help every step of the way."
+                                },
+                                "keywords": ["login", "cant login", "password", "forgot password", "authentication", "sign in", "signup", "register", "locked out", "access denied", "reset password", "wrong password", "account blocked"]
+                            },
+                            "account_hacked": {
+                                "text": "Think your account might be hacked?",
+                                "responses": {
+                                    "regular": "Let's secure your account immediately:\n1. Change your password right away\n2. Sign out of all devices\n3. Check for any unauthorized changes\n4. Enable two-factor authentication\n\nContact support if you notice any unauthorized charges.",
+                                    "frustrated": "I understand how concerning it is to think your account might be compromised. Let's act quickly to protect your account and get everything back to normal. We'll start by changing your password and securing your account together."
+                                },
+                                "keywords": ["hacked", "compromised", "stolen", "unauthorized", "strange activity", "someone else", "security", "suspicious"]
+                            }
+                        }
+                    },
+                    "payment_billing": {
+                        "text": "Having payment or billing issues?",
+                        "children": {
+                            "payment_failed": {
+                                "text": "Is your payment not going through?",
+                                "responses": {
+                                    "regular": "Let's check your payment details:\n1. Verify your card information is current\n2. Ensure sufficient funds are available\n3. Check if your bank is blocking the transaction\n4. Try an alternative payment method\n\nNeed to update your payment info? I can guide you through that.",
+                                    "frustrated": "I understand payment issues can be very stressing. Let's work together to get your premium service running smoothly again. We'll check your payment details step by step and find the best solution."
+                                },
+                                "keywords": ["payment", "declined", "card", "billing", "charge", "transaction", "failed payment", "cant pay", "payment method", "update card"]
+                            },
+                            "subscription_issues": {
+                                "text": "Having trouble with your subscription?",
+                                "responses": {
+                                    "regular": "Let's review your subscription:\n1. Check your current plan status\n2. Verify recent payments\n3. Review any pending changes\n4. Confirm billing cycle dates\n\nI can help you understand your options and make any needed adjustments.",
+                                    "frustrated": "I know subscription issues can be confusing and frustrating. Let's look at your account together and make sure you're getting exactly what you're paying for. We'll review your plan and sort out any issues."
+                                },
+                                "keywords": ["subscription", "premium", "plan", "cancel", "renew", "upgrade", "downgrade", "family plan", "student plan", "duo plan"]
+                            }
+                        }
                     },
                     "playback": {
-                        "text": "Having playback issues?",
-                        "responses": {
-                            "regular": "Let's troubleshoot your playback issues. First, check if your internet connection is stable and try playing a different song.",
-                            "frustrated": "I know it's frustrating when your music won't play properly. Let's get this fixed together."
-                        },
-                        "keywords": ["wont play", "no sound", "playback", "buffer", "streaming", "stuck", "freezing"]
+                        "text": "Having trouble playing music?",
+                        "children": {
+                            "audio_quality": {
+                                "text": "Issues with sound quality or playback?",
+                                "responses": {
+                                    "regular": "Let's improve your listening experience:\n1. Check your internet connection speed\n2. Adjust the streaming quality in settings\n3. Try downloading for offline listening\n4. Update your audio drivers\n5. Check your device volume and equalizer settings",
+                                    "frustrated": "Poor audio quality can really ruin the experience - I get it. Let's work together to get your music sounding crystal clear again. We'll check your settings and connection to find the best solution."
+                                },
+                                "keywords": ["quality", "sound", "audio", "static", "cutting out", "buffering", "lag", "skip", "stutter", "offline", "download"]
+                            },
+                            "device_sync": {
+                                "text": "Problems with device synchronization?",
+                                "responses": {
+                                    "regular": "Let's get your devices in sync:\n1. Check your internet connection\n2. Force close and restart Spotify\n3. Log out and back in\n4. Remove unused devices\n5. Update the app on all devices",
+                                    "frustrated": "It's really annoying when your devices aren't working together smoothly. Let's fix this sync issue step by step so you can enjoy your music anywhere."
+                                },
+                                "keywords": ["sync", "devices", "connect", "switch", "transfer", "multiple devices", "phone", "computer", "tablet", "speaker"]
+                            }
+                        }
+                    },
+                    "playlist_library": {
+                        "text": "Having issues with playlists or your library?",
+                        "children": {
+                            "missing_content": {
+                                "text": "Can't find your music or playlists?",
+                                "responses": {
+                                    "regular": "Let's locate your content:\n1. Check if you're logged into the correct account\n2. Look in your 'Liked Songs'\n3. Search for specific playlists\n4. Check Recently Played\n5. Verify if songs are still available in your region",
+                                    "frustrated": "I understand how upsetting it is when your carefully curated music collection seems to disappear. Let's work together to find your content and get everything back in order."
+                                },
+                                "keywords": ["missing", "disappeared", "cant find", "lost", "deleted", "gone", "playlist", "songs", "library", "collection"]
+                            },
+                            "playlist_management": {
+                                "text": "Need help managing your playlists?",
+                                "responses": {
+                                    "regular": "Here's how to manage your playlists:\n1. Create new playlists\n2. Add or remove songs\n3. Change playlist privacy settings\n4. Collaborate with friends\n5. Sort and organize your music",
+                                    "frustrated": "I know organizing your music collection is important to you. Let's walk through the playlist management tools together and get everything arranged just the way you want it."
+                                },
+                                "keywords": ["create playlist", "edit playlist", "organize", "sort", "collaborate", "share", "private", "public", "add songs", "remove songs"]
+                            }
+                        }
+                    },
+                    "app_technical": {
+                        "text": "Having technical issues with the app?",
+                        "children": {
+                            "app_crashes": {
+                                "text": "Is the app crashing or not responding?",
+                                "responses": {
+                                    "regular": "Let's fix the app issues:\n1. Force close the app\n2. Clear app cache and data\n3. Check for app updates\n4. Restart your device\n5. Reinstall if necessary",
+                                    "frustrated": "App crashes are incredibly frustrating when you just want to listen to your music. Let's get Spotify working smoothly again with some proven troubleshooting steps."
+                                },
+                                "keywords": ["crash", "freeze", "stuck", "not responding", "black screen", "force close", "slow", "buggy", "glitch", "error"]
+                            },
+                            "offline_mode": {
+                                "text": "Problems with offline mode or downloads?",
+                                "responses": {
+                                    "regular": "Let's check your offline settings:\n1. Verify Premium subscription status\n2. Check available storage space\n3. Confirm download settings\n4. Try re-downloading content\n5. Check download quality settings",
+                                    "frustrated": "I understand how important it is to have your music available offline. Let's make sure your downloads are working properly so you can enjoy your music anywhere, anytime."
+                                },
+                                "keywords": ["offline", "download", "storage", "space", "local files", "save", "mobile data", "wifi", "no internet", "available offline"]
+                            }
+                        }
                     }
                 }
             }
@@ -190,7 +279,7 @@ Please type '1' or '2' to choose."""
             # Email configuration for Gmail
             sender = "jonathanwigunapromotion@gmail.com"  # Replace with your Gmail
             recipient = "jonathanwiguna2004@gmail.com"  # Replace with your destination email
-            # password = "jxaa iqak dyvv lnwv"  # Replace with your generated App Password
+            password = "jxaa iqak dyvv lnwv"  # Replace with your generated App Password
             
             # Create detailed message body with user information
             body = f"""
