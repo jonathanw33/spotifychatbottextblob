@@ -1,0 +1,4 @@
+textblob==0.17.1
+sentence-transformers==2.5.1
+scikit-learn==1.4.0
+numpy==1.26.3

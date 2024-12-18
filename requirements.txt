@@ -1,0 +1,16 @@
+textblob==0.17.1
+sentence-transformers==2.5.1
+scikit-learn==1.4.0
+numpy==1.26.3
+python-dotenv
+asyncio
+aiohttp
+aiosmtplib
+fastapi
+uvicorn
+pydantic
+supabase
+pydantic-settings==2.1.0
+jinja2
+aiofiles
+python-multipart
