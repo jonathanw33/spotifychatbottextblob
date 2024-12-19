@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         #widget-opener {
             position: fixed;
@@ -27,6 +28,7 @@
         }
 
         .spotify-chat-widget {
+            font-family: 'Montserrat', sans-serif;
             position: fixed;
             bottom: 20px;
             right: 20px;
@@ -183,6 +185,70 @@
             color: #1DB954;
             font-weight: bold;
         }
+
+        .typing-indicator {
+            background-color: #e8f5e9;
+            padding: 8px;
+            border-radius: 4px;
+            margin-right: 20px;
+            margin-bottom: 8px;
+            display: none;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background-color: #1DB954;
+            display: inline-block;
+            border-radius: 50%;
+            margin: 0 2px;
+            opacity: 0.4;
+            animation: typing 1s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Message timestamp */
+        .chat-message {
+            position: relative;
+        }
+
+        .message-timestamp {
+            font-size: 0.7em;
+            color: #888;
+            position: absolute;
+            bottom: -15px;
+            right: 5px;
+        }
+
+        /* Adjust message margins for timestamps */
+        .chat-message {
+            margin: 12px 0 20px 0;
+        }
+
+        /* Font weights */
+        .widget-header {
+            font-weight: 600;
+        }
+
+        #authForm h3 {
+            font-weight: 600;
+        }
+
+        button {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+        }
+
+        input {
+            font-family: 'Montserrat', sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -214,6 +280,11 @@
             <div class="chat-interface" id="chatInterface">
                 <div id="chatMessages"></div>
             </div>
+        </div>
+        <div class="typing-indicator" id="typingIndicator">
+            <span></span>
+            <span></span>
+            <span></span>
         </div>
         <div class="message-input" id="messageInput" style="display: none;">
             <input type="text" placeholder="Type your message...">

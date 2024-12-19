@@ -172,6 +172,8 @@ class SpotifyChatWidget {
         try {
             this.addMessage(message, 'user');
             input.value = '';
+
+            this.showTypingIndicator();
     
             const response = await fetch('/api/v1/chat', {
                 method: 'POST',
@@ -183,6 +185,9 @@ class SpotifyChatWidget {
                     message: message
                 }),
             });
+
+            this.hideTypingIndicator();
+
     
             const data = await response.json();
             this.addMessage(data.message, 'bot');
@@ -295,9 +300,29 @@ class SpotifyChatWidget {
         const chatMessages = document.getElementById('chatMessages');
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('chat-message', `${type}-message`);
+        
+        // Add message text
         messageDiv.textContent = message;
+        
+        // Add timestamp
+        const timestamp = document.createElement('div');
+        timestamp.classList.add('message-timestamp');
+        timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        messageDiv.appendChild(timestamp);
+        
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+        // Add new method for typing indicator
+    showTypingIndicator() {
+        const indicator = document.getElementById('typingIndicator');
+        indicator.style.display = 'block';
+        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+    }
+
+    hideTypingIndicator() {
+        document.getElementById('typingIndicator').style.display = 'none';
     }
 
     showChatInterface() {

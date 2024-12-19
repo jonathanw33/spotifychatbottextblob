@@ -136,12 +136,28 @@ class SpotifySupportBot:
         
         # Create embeddings for each issue and their keywords
         self.issue_embeddings = {}
-        for issue, data in self.decision_tree["root"]["children"].items():
-            # Combine issue name with all its keywords for better matching
-            all_texts = [issue] + data.get("keywords", [])
-            # Calculate average embedding
-            embeddings = [self.model.encode(text) for text in all_texts]
-            self.issue_embeddings[issue] = np.mean(embeddings, axis=0)
+
+        # Traverse the decision tree to get all subcategories and their keywords
+        for main_issue, main_data in self.decision_tree["root"]["children"].items():
+            if "children" in main_data:
+                for sub_issue, sub_data in main_data["children"].items():
+                    # Create a unique key for this subcategory
+                    issue_key = f"{main_issue}.{sub_issue}"
+                    
+                    # Combine all relevant text for matching
+                    all_texts = [
+                        main_issue,  # main category name
+                        sub_issue,   # subcategory name
+                        sub_data.get("text", "")  # question text
+                    ]
+                    
+                    # Add keywords if they exist
+                    if "keywords" in sub_data:
+                        all_texts.extend(sub_data["keywords"])
+                    
+                    # Calculate embedding
+                    embeddings = [self.model.encode(text.lower()) for text in all_texts]
+                    self.issue_embeddings[issue_key] = np.mean(embeddings, axis=0)
             
     async def initialize_user_state(self, user_id: str):
         """Initialize or load existing user state"""
@@ -163,19 +179,23 @@ class SpotifySupportBot:
 
     def find_closest_issue(self, user_input):
         """Find the closest matching issue using semantic similarity"""
-        input_embedding = self.model.encode(user_input)
+        input_embedding = self.model.encode(user_input.lower())
         
         similarities = {}
-        for issue, embedding in self.issue_embeddings.items():
+        for issue_key, embedding in self.issue_embeddings.items():
             similarity = float(cosine_similarity(
                 [input_embedding],
                 [embedding]
             )[0][0])
-            similarities[issue] = similarity
+            similarities[issue_key] = similarity
         
         # Get the highest similarity
         max_issue = max(similarities.items(), key=lambda x: x[1])
-        return max_issue if max_issue[1] > 0.3 else (None, 0.0)
+        if max_issue[1] > 0.3:
+            # Split the composite key back into main category and subcategory
+            main_category, subcategory = max_issue[0].split('.')
+            return (main_category, subcategory), max_issue[1]
+        return (None, None), 0.0
 
     def get_response(self, user_id, user_input):
         """Main function to process user input and return appropriate response"""
@@ -211,7 +231,10 @@ class SpotifySupportBot:
         
         # Analyze sentiment
         sentiment = self.analyze_sentiment(user_input)
-        
+        match_result = self.find_closest_issue(user_input)
+        print(f"Match result: {match_result}")  # Debug log
+
+
         # Update frustration count based on sentiment
         if sentiment < -0.3:
             self.user_states[user_id]['frustration_count'] += 1
@@ -225,8 +248,8 @@ class SpotifySupportBot:
         # Prepare debug info
         debug_info = {
             "sentiment": sentiment,
-            "matched_issue": closest_issue,
-            "similarity_score": similarity_score,
+            "matched_issue": match_result[0] if match_result else None,
+            "similarity_score": match_result[1] if match_result else 0,
             "response_type": response_type,
             "frustration_count": self.user_states[user_id]['frustration_count']
         }
@@ -253,16 +276,26 @@ Please type '1' or '2' to choose."""
                 response = "I'm here to help you directly. What seems to be the problem?"
         else:
             # Get response for normal flow
-            if closest_issue and closest_issue in self.decision_tree['root']['children']:
-                node = self.decision_tree['root']['children'][closest_issue]
-                response = node['responses'][response_type]
+            if match_result and match_result[0] and match_result[0][0]:  # Check if we have a valid match
+                main_category, subcategory = match_result[0]
+                try:
+                    # Navigate to the correct subcategory
+                    node = self.decision_tree['root']['children'][main_category]['children'][subcategory]
+                    response = node['responses'][response_type]
+                    print(f"Found response for {main_category}.{subcategory}")  # Debug log
+                except (KeyError, TypeError) as e:
+                    print(f"Error accessing decision tree: {e}")  # Debug log
+                    response = "I'm not sure I understand. Could you please rephrase your question?"
             else:
+                print("No valid match found")  # Debug log
                 response = "I'm not sure I understand. Could you please rephrase your question?"
-        
+            
         # Save updated state
         self.auth.save_user_state(user_id, self.user_states[user_id])
-        
+            
         return response, debug_info
+            
+
 
     def create_support_ticket(self, user_id: str, conversation_history=None):
         """Create and send support ticket via email with user information from Supabase"""
