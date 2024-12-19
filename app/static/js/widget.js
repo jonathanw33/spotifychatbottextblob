@@ -296,22 +296,54 @@ class SpotifyChatWidget {
         };
     }
 
-    addMessage(message, type) {
-        const chatMessages = document.getElementById('chatMessages');
+    createMessageElement(message, type) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('chat-message', `${type}-message`);
         
-        // Add message text
-        messageDiv.textContent = message;
+        // Create message content container
+        const contentDiv = document.createElement('div');
+        contentDiv.classList.add('message-content');
+        contentDiv.textContent = message;
+        messageDiv.appendChild(contentDiv);
         
         // Add timestamp
         const timestamp = document.createElement('div');
         timestamp.classList.add('message-timestamp');
-        timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const time = new Date().toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        timestamp.textContent = time;
         messageDiv.appendChild(timestamp);
         
-        chatMessages.appendChild(messageDiv);
+        // Add agent indicator for bot messages
+        if (type === 'bot') {
+            const agentIndicator = document.createElement('div');
+            agentIndicator.classList.add('agent-indicator');
+            agentIndicator.textContent = 'Spotify Support';
+            messageDiv.appendChild(agentIndicator);
+        }
+        
+        return messageDiv;
+    }
+
+    addMessage(message, type) {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) {
+            console.error('Chat messages container not found!');
+            return;
+        }
+        
+        const messageElement = this.createMessageElement(message, type);
+        chatMessages.appendChild(messageElement);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Debug log
+        console.log('Added message:', {
+            type,
+            hasTimestamp: !!messageElement.querySelector('.message-timestamp'),
+            timestampText: messageElement.querySelector('.message-timestamp')?.textContent
+        });
     }
 
         // Add new method for typing indicator

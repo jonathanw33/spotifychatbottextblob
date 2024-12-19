@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spotify Support Bot Project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #121212;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Hero Section with Animation */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 2;
+        }
+
+        /* Animated Background */
+        .animated-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #121212, #1DB954);
+            opacity: 0.1;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Floating Elements */
+        .floating-icons {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .floating-icon {
+            position: absolute;
+            animation: float 6s ease-in-out infinite;
+            opacity: 0.1;
+            font-size: 2em;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Text Animations */
+        .hero h1 {
+            font-size: 4.5em;
+            margin: 0;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.8s ease forwards;
+        }
+
+        .hero p {
+            font-size: 1.5em;
+            margin: 20px 0;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.8s ease forwards 0.2s;
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Feature Cards */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            transform: translateY(50px);
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .feature-card.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Glowing Effects */
+        .spotify-green {
+            color: #1DB954;
+            text-shadow: 0 0 20px rgba(29, 185, 84, 0.5);
+        }
+
+        /* Call to Action Button */
+        .cta-button {
+            display: inline-block;
+            background: #1DB954;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.2em;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(29, 185, 84, 0.5);
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 60px 0;
+            text-align: center;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            height: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: #1DB954;
+            height: 100%;
+            width: 75%;
+            border-radius: 5px;
+            animation: progressFill 1.5s ease;
+        }
+
+        @keyframes progressFill {
+            from { width: 0; }
+            to { width: 75%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="animated-bg"></div>
+        <div class="floating-icons">
+            <!-- Add multiple floating icons -->
+            <div class="floating-icon" style="top: 20%; left: 20%">🎵</div>
+            <div class="floating-icon" style="top: 70%; left: 80%">🤖</div>
+            <div class="floating-icon" style="top: 40%; left: 60%">💬</div>
+            <div class="floating-icon" style="top: 80%; left: 30%">🎧</div>
+        </div>
+        <div class="hero-content">
+            <h1>Spotify Support <span class="spotify-green">Chatbot</span></h1>
+            <p>Next-Generation Customer Support powered by AI</p>
+            <a href="/widget" class="cta-button">Experience It Now</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="features">
+            <div class="feature-card">
+                <h3>🧠 AI-Powered Understanding</h3>
+                <p>Using state-of-the-art NLP models to understand user intent and emotions</p>
+            </div>
+            <div class="feature-card">
+                <h3>📊 Smart Analysis</h3>
+                <p>TextBlob and Sentence Transformers working together for precise response matching</p>
+            </div>
+            <div class="feature-card">
+                <h3>🎯 Adaptive Responses</h3>
+                <p>Intelligently adjusts to user frustration levels and provides empathetic support</p>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <h2>Development Progress</h2>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <p>Expected completion: January 8, 2025</p>
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='/js/landing.js') }}"></script>
+
+</body>
+</html>

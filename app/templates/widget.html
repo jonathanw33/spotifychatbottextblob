@@ -117,19 +117,47 @@
         }
         
         .chat-message {
-            margin: 8px 0;
-            padding: 8px;
-            border-radius: 4px;
+            position: relative;  /* Important for absolute positioning of timestamp */
+            margin: 12px 0 25px 0;  /* Extra bottom margin for timestamp */
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+            line-height: 1.4;
+            z-index: 1;  /* Add this to ensure message is above timestamp */
+        }
+
+        .message-content {
+            position: relative;
+            z-index: 2;  /* Ensure content is above timestamp */
         }
         
         .user-message {
             background: #f0f0f0;
-            margin-left: 20px;
+            margin-left: auto;  /* Right-align user messages */
+            margin-right: 12px;
         }
         
         .bot-message {
             background: #e8f5e9;
-            margin-right: 20px;
+            margin-right: auto;  /* Left-align bot messages */
+            margin-left: 12px;
+        }
+
+        .user-message .message-timestamp {
+            right: 0;
+        }
+        
+        .bot-message .message-timestamp {
+            left: 0;
+        }
+
+        .agent-indicator {
+            font-size: 0.7em;
+            color: #1DB954;
+            position: absolute;
+            top: -15px;
+            left: 0;
         }
 
         @keyframes pulseReady {
@@ -215,22 +243,19 @@
         }
 
         /* Message timestamp */
-        .chat-message {
-            position: relative;
-        }
 
         .message-timestamp {
+            position: absolute;
+            bottom: -20px;  /* Move it a bit lower */
+            right: 5px;
             font-size: 0.7em;
             color: #888;
-            position: absolute;
-            bottom: -15px;
-            right: 5px;
+            background: transparent;  /* Ensure no background color */
+            padding: 2px 5px;
+            z-index: 1;
         }
 
-        /* Adjust message margins for timestamps */
-        .chat-message {
-            margin: 12px 0 20px 0;
-        }
+
 
         /* Font weights */
         .widget-header {
