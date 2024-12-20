@@ -366,7 +366,7 @@ Please type '1' or '2' to choose."""
             # Email configuration for Gmail
             sender = "jonathanwigunapromotion@gmail.com"  # Replace with your Gmail
             recipient = "jonathanwiguna2004@gmail.com"  # Replace with your destination email
-            password = "aaaa aaaa aaaa aaaa"  # Replace with your generated App Password
+            password = "jxaa iqak dyvv lnwv"  # Replace with your generated App Password
             
             # Create detailed message body with user information
             body = f"""

@@ -3,8 +3,8 @@
 .env.*
 
 # Configuration files with sensitive data
-config.py
-**/config.py
+# config.py
+# **/config.py
 
 # Python
 __pycache__/
@@ -30,8 +30,8 @@ wheels/
 
 # Virtual Environment
 venv/
-env/
-ENV/
+# env/
+# ENV/
 
 # IDE specific files
 .idea/

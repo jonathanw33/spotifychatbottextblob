@@ -16,5 +16,15 @@ COPY app/ ./app/
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
+EXPOSE 8000
+
+# HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+#   CMD curl -f http://localhost:8000/healthz || exit 1
+
+ENV PYTHONPATH=/app
+ENV LOG_LEVEL=debug
+
 # Command to run FastAPI with uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--timeout-keep-alive", "75", "--log-level", "debug"]
+
+
