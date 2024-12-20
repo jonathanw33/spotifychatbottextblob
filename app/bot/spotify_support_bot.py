@@ -255,27 +255,34 @@ class SpotifySupportBot:
                 self.user_states[user_id] = {
                     'frustration_count': 0,
                     'current_node': 'root',
-                    'awaiting_choice': False
+                    'awaiting_choice': False,
+                    'chat_history': []
                 }
-                
-                # If awaiting choice for ticket
+
+        # If awaiting choice for ticket creation
         if self.user_states[user_id].get('awaiting_choice'):
             if user_input.strip() == '1':
-                self.user_states[user_id]['awaiting_choice'] = False
-                return "Thank you. Our support team will contact you soon. Chat ended.", {"choice": "end_chat"}
+                # Only create the ticket when user confirms
+                ticket_created = self.create_support_ticket(
+                    user_id, 
+                    conversation_history=self.user_states[user_id].get('chat_history', [])
+                )
+                if ticket_created:
+                    self.tickets_created.add(user_id)
+                    self.user_states[user_id]['awaiting_choice'] = False
+                    self.user_states[user_id]['chat_ended'] = True
+                    return "Thank you. Our support team will contact you soon. Chat ended.", {"choice": "end_chat"}
+                else:
+                    return "Sorry, there was an error creating your support ticket. Please try again.", {"error": "ticket_creation_failed"}
             elif user_input.strip() == '2':
                 self.user_states[user_id]['awaiting_choice'] = False
                 return "Okay, let's continue chatting. How else can I help you?", {"choice": "continue_chat"}
             else:
                 return "Please type '1' to end chat or '2' to continue chatting.", {"awaiting_choice": True}
         
-        
         # Analyze sentiment
         sentiment = self.analyze_sentiment(user_input)
-        match_result = self.find_closest_issue(user_input)
-        print(f"Match result: {match_result}")  # Debug log
-
-
+        
         # Update frustration count based on sentiment
         if sentiment < -0.3:
             self.user_states[user_id]['frustration_count'] += 1
@@ -289,51 +296,60 @@ class SpotifySupportBot:
         # Prepare debug info
         debug_info = {
             "sentiment": sentiment,
-            "matched_issue": match_result[0] if match_result else None,
-            "similarity_score": match_result[1] if match_result else 0,
+            "matched_issue": closest_issue,
+            "similarity_score": similarity_score,
             "response_type": response_type,
             "frustration_count": self.user_states[user_id]['frustration_count']
         }
         
-        # Check if we need to create a support ticket
+        # Check if we need to ask about creating a support ticket
         if (self.user_states[user_id]['frustration_count'] >= 3 and 
             user_id not in self.tickets_created and 
-            user_id not in self.failed_ticket_attempts):  # Add this check
+            user_id not in self.failed_ticket_attempts):
             
-            ticket_created = self.create_support_ticket(user_id)
-            if ticket_created:
-                self.tickets_created.add(user_id)
-                self.user_states[user_id]['awaiting_choice'] = True
-                debug_info["ticket_created"] = True
-                response = """I notice you're having difficulties. I've escalated this to our support team - they'll contact you soon to help resolve your issue.
+            self.user_states[user_id]['awaiting_choice'] = True
+            debug_info["awaiting_ticket_choice"] = True
+            response = """I notice you're having difficulties. I've escalated this to our support team - they'll contact you soon to help resolve your issue.
 
-Would you like to:
-1. End this chat and wait for support team
-2. Continue chatting with me
+    Would you like to:
+    1. End this chat and wait for support team
+    2. Continue chatting with me
 
-Please type '1' or '2' to choose."""
-            else:
-                self.failed_ticket_attempts.add(user_id)  # Mark as failed
-                response = "I'm here to help you directly. What seems to be the problem?"
+    Please type '1' or '2' to choose."""
         else:
             # Get response for normal flow
-            if match_result and match_result[0] and match_result[0][0]:  # Check if we have a valid match
-                main_category, subcategory = match_result[0]
+            if closest_issue and closest_issue[0]:  # Check if we have a valid match
+                main_category, subcategory = closest_issue
                 try:
                     # Navigate to the correct subcategory
                     node = self.decision_tree['root']['children'][main_category]['children'][subcategory]
                     response = node['responses'][response_type]
-                    print(f"Found response for {main_category}.{subcategory}")  # Debug log
                 except (KeyError, TypeError) as e:
-                    print(f"Error accessing decision tree: {e}")  # Debug log
+                    print(f"Error accessing decision tree: {e}")
                     response = "I'm not sure I understand. Could you please rephrase your question?"
             else:
-                print("No valid match found")  # Debug log
                 response = "I'm not sure I understand. Could you please rephrase your question?"
-            
+        
+        # Save chat history
+        chat_entry = {
+            'type': 'user',
+            'message': user_input,
+            'sentiment': sentiment,
+            'timestamp': datetime.now().isoformat()
+        }
+        self.user_states[user_id].setdefault('chat_history', []).append(chat_entry)
+
+        # Add bot response to history
+        bot_entry = {
+            'type': 'bot',
+            'message': response,
+            'timestamp': datetime.now().isoformat()
+        }
+        self.user_states[user_id]['chat_history'].append(bot_entry)
+        
         # Save updated state
         self.auth.save_user_state(user_id, self.user_states[user_id])
-            
+        
         return response, debug_info
             
     def get_frustration_or_default_response(self, sentiment, user_input):
@@ -363,12 +379,12 @@ Please type '1' or '2' to choose."""
                 
             user_email = user_profile.data[0]['email']
             
-            # Email configuration for Gmail
-            sender = "jonathanwigunapromotion@gmail.com"  # Replace with your Gmail
-            recipient = "jonathanwiguna2004@gmail.com"  # Replace with your destination email
-            password = "jxaa iqak dyvv lnwv"  # Replace with your generated App Password
+            # Email configuration
+            sender = "spotifyemailsender@gmail.com"
+            recipient = "jonathanwiguna2004@gmail.com"
+            password = "aaaa aaaa aaaa aaaa"
             
-            # Create detailed message body with user information
+            # Create message body
             body = f"""
     Support Ticket for User {user_id}
     User Email: {user_email}
@@ -381,12 +397,44 @@ Please type '1' or '2' to choose."""
 
     Recent Conversation History:
     """
+            # Ensure conversation_history exists and is a list
+            if conversation_history is None:
+                conversation_history = []
+                print("Warning: conversation_history was None, initialized as empty list")
+            
+            if not isinstance(conversation_history, list):
+                print(f"Error: conversation_history is not a list, type: {type(conversation_history)}")
+                conversation_history = []
+
+            # Debug logging
+            print(f"Conversation history type: {type(conversation_history)}")
+            print(f"Conversation history length: {len(conversation_history)}")
+            print("First few entries:", conversation_history[:2])
+            
+            # Add complete conversation history to body
             if conversation_history:
-                for entry in conversation_history[-6:]:  # Last 3 exchanges
-                    body += f"\n{entry['type']}: {entry['message']}"
-                    if 'sentiment' in entry:
-                        body += f"\nSentiment: {entry['sentiment']:.2f}"
-                    body += "\n"
+                body += "\nComplete Conversation History:\n"
+                body += "=" * 50 + "\n"  # Add separator for better readability
+                for entry in conversation_history:
+                    if isinstance(entry, dict):
+                        timestamp = entry.get('timestamp', 'unknown time')
+                        entry_type = entry.get('type', 'unknown')
+                        message = entry.get('message', 'no message')
+                        
+                        # Format timestamp to be more readable
+                        try:
+                            dt = datetime.fromisoformat(timestamp)
+                            formatted_time = dt.strftime('%Y-%m-%d %H:%M:%S')
+                        except:
+                            formatted_time = timestamp
+                        
+                        body += f"\n[{formatted_time}] {entry_type.upper()}: {message}"
+                        if 'sentiment' in entry and entry_type == 'user':
+                            body += f"\nSentiment Score: {entry.get('sentiment', 0):.2f}"
+                        body += "\n"
+                    else:
+                        print(f"Warning: Invalid entry in conversation history: {entry}")
+                body += "=" * 50 + "\n"  # Add closing separator
 
             # Create email message
             msg = MIMEText(body)
@@ -402,17 +450,45 @@ Please type '1' or '2' to choose."""
                     server.send_message(msg)
                 print(f"Support ticket successfully sent to {recipient}")
                 
-                # Store ticket in Supabase
-                self.auth.supabase.table('support_tickets').insert({
-                    'user_id': user_id,
-                    'email': user_email,
-                    'ticket_content': body,
-                    'status': 'open',
-                    'created_at': datetime.utcnow().isoformat(),
-                    'conversation_history': json.dumps(conversation_history[-6:] if conversation_history else [])
-                }).execute()
+                # Prepare conversation history for JSON serialization
+                clean_history = []
+                for entry in conversation_history:
+                    if isinstance(entry, dict):
+                        # Create a new dict with only serializable values
+                        clean_entry = {
+                            'type': str(entry.get('type', 'unknown')),
+                            'message': str(entry.get('message', '')),
+                            'timestamp': entry.get('timestamp', datetime.now().isoformat())
+                        }
+                        if 'sentiment' in entry:
+                            clean_entry['sentiment'] = float(entry['sentiment'])
+                        clean_history.append(clean_entry)
                 
-                # Update user state in Supabase
+                # Debug the JSON serialization
+                try:
+                    history_json = json.dumps(clean_history)
+                    print("Successfully serialized conversation history")
+                except Exception as e:
+                    print(f"JSON serialization error: {str(e)}")
+                    history_json = json.dumps([])  # Fallback to empty list
+                
+                # Store ticket in Supabase with proper error handling
+                try:
+                    result = self.auth.supabase.table('support_tickets').insert({
+                        'user_id': user_id,
+                        'email': user_email,
+                        'ticket_content': body,
+                        'status': 'open',
+                        'created_at': datetime.utcnow().isoformat(),
+                        'conversation_history': history_json
+                    }).execute()
+                    print("Successfully inserted ticket into Supabase")
+                    print(f"Insert result: {result}")
+                except Exception as e:
+                    print(f"Supabase insert error: {str(e)}")
+                    return False
+                
+                # Update user state
                 self.auth.save_user_state(user_id, self.user_states[user_id])
                 
                 return True
