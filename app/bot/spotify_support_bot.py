@@ -382,7 +382,7 @@ class SpotifySupportBot:
             # Email configuration
             sender = "spotifyemailsender@gmail.com"
             recipient = "jonathanwiguna2004@gmail.com"
-            password = "aaaa aaaa aaaa aaaa"
+            password = "yqwg rcvi nndy qppb"
             
             # Create message body
             body = f"""
