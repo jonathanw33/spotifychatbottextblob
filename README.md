@@ -31,6 +31,23 @@ An AI-powered chatbot built with FastAPI that provides intelligent support for S
 - **Frontend**: HTML, CSS, JavaScript
 - **Database**: Supabase
 
+- **Deployment**: Azure Web Apps
+- **Container**: Docker
+- **CI/CD**: Azure Container Registry
+
+## How It Works 🔄
+
+### Chatbot Flow
+1. **User Input Processing**:
+  - Input text is analyzed for sentiment using TextBlob
+  - Detects user frustration levels based on word choice and punctuation
+  - Higher frustration scores trigger more empathetic responses
+
+2. **Response Matching**:
+  - Input text is transformed using Sentence Transformers
+  - Simplified sentence is matched against decision tree nodes
+  - Multiple matching techniques ensure accurate response selection
+
 3. **Decision Tree Navigation**:
   - Structured as a hierarchical JSON
   - Each node contains:
