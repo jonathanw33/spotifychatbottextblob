@@ -46,3 +46,26 @@ The bot's response quality heavily depends on the decision tree's comprehensiven
 - Leaf nodes provide detailed responses and troubleshooting steps
 - Response variations based on user frustration level 
 
+## Local Development 🛠️
+
+### Prerequisites
+- Python 3.12
+- Docker
+- Supabase account
+
+### Setup and Installation
+
+1. Clone the repository:
+    - git clone https://github.com/yourusername/spotify-support-bot.git
+    - cd spotify-support-bot
+
+2. Create .env file in the root directory:
+    - SUPABASE_URL=your_supabase_url
+    - SUPABASE_KEY=your_supabase_key
+
+3. Build and run with Docker Compose:
+    - docker-compose up --build
+
+## Don't forget to change the email configuration
+
+The application will be available locally at http://localhost:8000 for testing and debugging.
