@@ -30,3 +30,19 @@ An AI-powered chatbot built with FastAPI that provides intelligent support for S
 - **Backend**: FastAPI (Python 3.12)
 - **Frontend**: HTML, CSS, JavaScript
 - **Database**: Supabase
+
+3. **Decision Tree Navigation**:
+  - Structured as a hierarchical JSON
+  - Each node contains:
+    - Keywords for matching
+    - Response templates
+    - Follow-up questions
+    - Child nodes for deeper context and personalization
+
+### Decision Tree Structure
+The bot's response quality heavily depends on the decision tree's comprehensiveness:
+- Root nodes handle general categories (account, playback, billing, etc.)
+- Branch nodes contain specific issues, potential causes, and solutions
+- Leaf nodes provide detailed responses and troubleshooting steps
+- Response variations based on user frustration level 
+
