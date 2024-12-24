@@ -9,6 +9,9 @@ class SpotifyBotAuth:
         self.supabase_url = "https://miisnwyfwzsxrwjpcgdb.supabase.co"
         self.supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1paXNud3lmd3pzeHJ3anBjZ2RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQxODE5NDEsImV4cCI6MjA0OTc1Nzk0MX0.-vOVdYpY08Rrauio21sBjYhLJ59QcFRt4G5NrnOVoC0"
         self.supabase = create_client(self.supabase_url, self.supabase_key)
+                # Initialize OAuth manager
+        from app.bot.oauth_manager import OAuthManager
+        self.oauth = OAuthManager(self.supabase)
         
     def sign_up(self, email: str, password: str):
         try:

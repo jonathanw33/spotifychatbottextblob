@@ -3,9 +3,27 @@ class SpotifyChatWidget {
     constructor() {
         this.userId = null;
         this.setupEventListeners();
+        this.checkOAuthRedirect(); // Add this new method call
+
     }
 
     setupEventListeners() {
+                // Add OAuth buttons event listeners
+        const spotifyButton = document.querySelector('.spotify-btn');
+        if (spotifyButton) {
+            spotifyButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleOAuthRedirect('/api/v1/auth/spotify');
+            });
+        }
+
+        const googleButton = document.querySelector('.google-btn');
+        if (googleButton) {
+            googleButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleOAuthRedirect('/api/v1/auth/google');
+            });
+        }
         // Auth form submissions
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -98,6 +116,25 @@ class SpotifyChatWidget {
             this.toggleAuthForms();
         });
     }
+
+    // Add new OAuth-related methods
+    handleOAuthRedirect(authUrl) {
+        // Store current widget state if needed
+        localStorage.setItem('widgetState', 'opened');
+        // Redirect to OAuth provider
+        window.location.href = authUrl;
+    }
+
+    checkOAuthRedirect() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('logged_in') === 'true' && urlParams.has('user_id')) {
+            this.userId = urlParams.get('user_id');
+            this.showChatInterface();
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
 
     async handleLogin(form) {
         console.log("Login attempt starting...");
@@ -361,6 +398,10 @@ class SpotifyChatWidget {
         document.getElementById('authForm').classList.remove('active');
         document.getElementById('chatInterface').classList.add('active');
         document.getElementById('messageInput').style.display = 'flex';
+        const errorDiv = document.getElementById('authError');
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
     }
 
     toggleAuthForms() {

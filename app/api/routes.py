@@ -1,13 +1,57 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from app.bot.models import ChatRequest, ChatResponse, AuthRequest, UserResponse
 from app.bot.spotify_support_bot import SpotifySupportBot
 from typing import Optional
 from app.config import get_settings  # Add this import
+from fastapi.responses import RedirectResponse
+from app.bot.oauth_manager import OAuthManager
 
 router = APIRouter()
 bot = SpotifySupportBot()
 settings = get_settings()  # Add this to use settings in health check
+# Initialize OAuth manager with the same Supabase client used by the bot
+oauth_manager = OAuthManager(bot.auth.supabase)
 
+
+
+@router.get("/auth/spotify")
+def spotify_login():
+    """Initiate Spotify OAuth flow"""
+    try:
+        auth_url = oauth_manager.initiate_spotify_login()
+        return RedirectResponse(url=auth_url)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/auth/spotify/callback")
+def spotify_callback(code: str, state: str):
+    """Handle Spotify OAuth callback"""
+    success, result = oauth_manager.handle_spotify_callback(code, state)
+    if not success:
+        raise HTTPException(status_code=400, detail=result.get("error", "OAuth failed"))
+    return UserResponse(success=True, user=result)
+
+@router.get("/auth/google")
+def google_login():
+    """Initiate Google OAuth flow"""
+    try:
+        auth_url = oauth_manager.initiate_google_login()
+        return RedirectResponse(url=auth_url)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/auth/google/callback")
+def google_callback(code: str, state: str):
+    """Handle Google OAuth callback"""
+    success, result = oauth_manager.handle_google_callback(code, state)
+    if not success:
+        raise HTTPException(status_code=400, detail=result.get("error", "OAuth failed"))
+    
+    # Redirect back to widget with user info
+    return RedirectResponse(
+        url=result.get("redirect_url", "/widget"),
+        status_code=302
+    )
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
