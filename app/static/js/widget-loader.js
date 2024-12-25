@@ -1,11 +1,465 @@
-// app/static/js/widget.js
-class SpotifyChatWidget {
-    constructor() {
-        this.userId = null;
-        this.setupEventListeners();
-        this.checkOAuthRedirect(); // Add this new method call
+// app/static/js/widget-loader.js
+(function() {
+    const API_BASE_URL = 'http://localhost:8000';
+    
+    // Create widget container
+    const container = document.createElement('div');
+    container.id = 'spotify-support-widget';
+    
+    // Create Google Font link
+    const fontLink = document.createElement('link');
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap';
+    fontLink.rel = 'stylesheet';
+    document.head.appendChild(fontLink);
 
-    }
+
+    // Add both the widget HTML and CSS
+    container.innerHTML = `
+        <div id="widget-opener" style="display: none;">
+            <button class="open-widget-btn">
+                Need help?
+            </button>
+        </div>
+
+        <div class="spotify-chat-widget">
+            <div class="widget-header">
+                Spotify Support
+                <div class="widget-controls">
+                    <button class="minimize-btn">_</button>
+                    <button class="close-btn">×</button>
+                </div>
+            </div>
+            <div class="widget-content">
+                <div class="auth-form active" id="authForm">
+                    <h3>Login or Sign Up</h3>
+                    <div class="social-login">
+                        <button onclick="window.spotifyChatWidget.handleOAuthLogin('spotify')" class="social-btn spotify-btn">
+                            Continue with Spotify
+                        </button>
+                        <button onclick="window.spotifyChatWidget.handleOAuthLogin('google')" class="social-btn google-btn">
+                            Continue with Google
+                        </button>
+                    </div>
+            
+                    <div class="separator">
+                        <span>or</span>
+                    </div>
+
+                    <form id="loginForm">
+                        <input type="email" placeholder="Email" required>
+                        <input type="password" placeholder="Password" required>
+                        <button type="submit">Login</button>
+                    </form>
+                    <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
+                </div>
+                
+                <div class="chat-interface" id="chatInterface">
+                    <div id="chatMessages"></div>
+                </div>
+            </div>
+            <div class="typing-indicator" id="typingIndicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="message-input" id="messageInput" style="display: none;">
+                <input type="text" placeholder="Type your message...">
+                <button>Send</button>
+            </div>
+        </div>
+          `;
+
+
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+        #widget-opener {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999;
+        }
+
+        .open-widget-btn {
+            background: #1DB954;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .open-widget-btn:hover {
+            transform: scale(1.05);
+            background-color: #1ed760;
+        }
+
+        .spotify-chat-widget {
+            font-family: 'Montserrat', sans-serif;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            height: 500px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: height 0.3s ease, opacity 0.3s ease;
+        }
+        
+        .widget-header {
+            background: #1DB954;
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .widget-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .minimize-btn, .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0 5px;
+            font-size: 18px;
+            line-height: 1;
+            transition: opacity 0.2s;
+        }
+
+        .minimize-btn:hover, .close-btn:hover {
+            opacity: 0.8;
+        }
+
+        .close-btn {
+            font-size: 20px;
+        }
+        
+        .widget-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-form, .chat-interface {
+            display: none;
+        }
+        
+        .auth-form.active, .chat-interface.active {
+            display: block;
+        }
+        
+        .message-input {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            transition: all 0.3s ease;
+        }
+        
+        .message-input input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        
+        .message-input button {
+            background: #1DB954;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .chat-message {
+            position: relative;  /* Important for absolute positioning of timestamp */
+            margin: 12px 0 25px 0;  /* Extra bottom margin for timestamp */
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+            line-height: 1.4;
+            z-index: 1;  /* Add this to ensure message is above timestamp */
+        }
+
+        .message-content {
+            position: relative;
+            z-index: 2;  /* Ensure content is above timestamp */
+        }
+        
+        .user-message {
+            background: #f0f0f0;
+            margin-left: auto;  /* Right-align user messages */
+            margin-right: 12px;
+        }
+        
+        .bot-message {
+            background: #e8f5e9;
+            margin-right: auto;  /* Left-align bot messages */
+            margin-left: 12px;
+        }
+
+        .user-message .message-timestamp {
+            right: 0;
+        }
+        
+        .bot-message .message-timestamp {
+            left: 0;
+        }
+
+        .agent-indicator {
+            font-size: 0.7em;
+            color: #1DB954;
+            position: absolute;
+            top: -15px;
+            left: 0;
+        }
+
+        @keyframes pulseReady {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reopen-btn {
+            background: #1DB954;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 15px auto;
+            display: block;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .reopen-btn:hover:not(:disabled) {
+            background: #1ed760;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .reopen-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .reopen-btn.ready {
+            animation: fadeIn 0.5s ease-out, pulseReady 2s infinite ease-in-out;
+        }
+
+        .countdown {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+
+        .countdown.complete {
+            color: #1DB954;
+            font-weight: bold;
+        }
+
+        .typing-indicator {
+            background-color: #e8f5e9;
+            padding: 8px;
+            border-radius: 4px;
+            margin-right: 20px;
+            margin-bottom: 8px;
+            display: none;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background-color: #1DB954;
+            display: inline-block;
+            border-radius: 50%;
+            margin: 0 2px;
+            opacity: 0.4;
+            animation: typing 1s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Message timestamp */
+
+        .message-timestamp {
+            position: absolute;
+            bottom: -20px;  /* Move it a bit lower */
+            right: 5px;
+            font-size: 0.7em;
+            color: #888;
+            background: transparent;  /* Ensure no background color */
+            padding: 2px 5px;
+            z-index: 1;
+        }
+
+
+
+        /* Font weights */
+        .widget-header {
+            font-weight: 600;
+        }
+
+        #authForm h3 {
+            font-weight: 600;
+        }
+
+        button {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+        }
+
+        input {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .social-login {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .spotify-btn {
+            background-color: #1DB954;
+            color: white;
+            border: none;
+        }
+        
+        .spotify-btn:hover {
+            background-color: #1ed760;
+        }
+        
+        .google-btn {
+            background-color: white;
+            color: #444;
+            border: 1px solid #ddd;
+        }
+        
+        .google-btn:hover {
+            background-color: #f8f8f8;
+        }
+        
+        .separator {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .separator::before,
+        .separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .separator span {
+            padding: 0 10px;
+            color: #777;
+            font-size: 14px;
+        }
+        
+        /* Update existing button styles to match */
+        .login-btn {
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 4px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .login-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        /* Ensure consistent input styling */
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+            ${document.querySelector('style').textContent}
+    `;
+    document.head.appendChild(styleElement);
+
+
+    // Add widget JavaScript
+    const script = document.createElement('script');
+    script.textContent = `
+        // Your SpotifyChatWidget class with API_BASE_URL modification
+        class SpotifyChatWidget {
+            constructor() {
+                this.apiBaseUrl = '${API_BASE_URL}';
+                this.userId = null;
+                this.setupEventListeners();
+                this.checkOAuthRedirect();
+            }
+
+            handleOAuthLogin(provider) {
+                const width = 600;
+                const height = 700;
+                const left = (window.innerWidth - width) / 2;
+                const top = (window.innerHeight - height) / 2;
+                
+                window.open(
+                    this.apiBaseUrl + '/api/v1/auth/' + provider,
+                    'OAuth Login',
+                    \`width=\${width},height=\${height},left=\${left},top=\${top}\`
+                );
+            }
 
     setupEventListeners() {
                 // Add OAuth buttons event listeners
@@ -277,7 +731,7 @@ class SpotifyChatWidget {
         const updateCountdown = () => {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
-            countdownDiv.textContent = `Can reopen chat in ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            countdownDiv.textContent = \`Can reopen chat in \${minutes}:\${seconds.toString().padStart(2, '0')}\`;
             
             if (timeLeft <= 0) {
                 button.disabled = false;
@@ -335,7 +789,7 @@ class SpotifyChatWidget {
 
     createMessageElement(message, type) {
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('chat-message', `${type}-message`);
+        messageDiv.classList.add('chat-message', type + '-message');
         
         // Create message content container
         const contentDiv = document.createElement('div');
@@ -431,30 +885,31 @@ class SpotifyChatWidget {
     createErrorDiv() {
         const errorDiv = document.createElement('div');
         errorDiv.id = 'authError';
-        errorDiv.style.cssText = `
+        // Using escaped backticks \` for inner template literal
+        errorDiv.style.cssText = \`
             color: #e74c3c;
             padding: 10px;
             margin: 10px 0;
             border-radius: 4px;
             background: #fde8e8;
             display: none;
-        `;
+        \`;
         const form = document.getElementById('loginForm');
         form.insertBefore(errorDiv, form.firstChild);
         return errorDiv;
     }
 
     handleOAuthLogin(provider) {
-        // Open OAuth in new window/tab instead of inside iframe
         const width = 600;
         const height = 700;
         const left = (window.innerWidth - width) / 2;
         const top = (window.innerHeight - height) / 2;
         
         window.open(
-            `/api/v1/auth/${provider}`,
+            // Use this.apiBaseUrl for cross-domain support
+            \`\${this.apiBaseUrl}/api/v1/auth/\${provider}\`,
             'OAuth Login',
-            `width=${width},height=${height},left=${left},top=${top}`
+            \`width=\${width},height=\${height},left=\${left},top=\${top}\`
         );
     }
 
@@ -473,36 +928,39 @@ class SpotifyChatWidget {
         }
     }
 
-    createLoadingSpinner() {
-        const spinner = document.createElement('div');
-        spinner.id = 'loadingSpinner';
-        spinner.style.cssText = `
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #1DB954;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 10px;
-        `;
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
+            createLoadingSpinner() {
+                const spinner = document.createElement('div');
+                spinner.id = 'loadingSpinner';
+                spinner.style.cssText = \`
+                    display: none;
+                    width: 20px;
+                    height: 20px;
+                    border: 2px solid #f3f3f3;
+                    border-top: 2px solid #1DB954;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin-left: 10px;
+                \`;
+
+                const style = document.createElement('style');
+                // Use string concatenation for keyframes instead of template literals
+                style.textContent = 
+                    "@keyframes spin {" +
+                    "   0% { transform: rotate(0deg); }" +
+                    "   100% { transform: rotate(360deg); }" +
+                    "}";
+
+                document.head.appendChild(style);
+                const submitButton = document.querySelector('#loginForm button');
+                submitButton.parentNode.insertBefore(spinner, submitButton.nextSibling);
+                return spinner;
             }
-        `;
-        document.head.appendChild(style);
-        const submitButton = document.querySelector('#loginForm button');
-        submitButton.parentNode.insertBefore(spinner, submitButton.nextSibling);
-        return spinner;
-    }
-}
+        }
 
+        window.spotifyChatWidget = new SpotifyChatWidget();
+    `;
 
-
-// Initialize widget when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.spotifyChatWidget = new SpotifyChatWidget();
-});
+    // Add everything to the page
+    document.body.appendChild(container);
+    document.body.appendChild(script);
+})();

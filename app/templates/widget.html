@@ -383,11 +383,11 @@
             <div class="auth-form active" id="authForm">
                 <h3>Login or Sign Up</h3>
                 <div class="social-login">
-                    <button onclick="window.location.href='/api/v1/auth/spotify'" class="social-btn spotify-btn">
+                    <button onclick="window.spotifyChatWidget.handleOAuthLogin('spotify')" class="social-btn spotify-btn">
                         <img src="/static/images/spotify-icon.svg" alt="Spotify" width="20" height="20">
                         Continue with Spotify
                     </button>
-                    <button onclick="window.location.href='/api/v1/auth/google'" class="social-btn google-btn">
+                    <button onclick="window.spotifyChatWidget.handleOAuthLogin('google')" class="social-btn google-btn">
                         <img src="/static/images/google-icon.svg" alt="Google" width="20" height="20">
                         Continue with Google
                     </button>
