@@ -19,11 +19,13 @@ async def test_page(request: Request):
     return templates.TemplateResponse("test.html", {"request": request})
 
 @router.get("/static/js/widget-loader.js")
-async def widget_loader():
+async def serve_widget_loader():
     file_path = Path("app/static/js/widget-loader.js")
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Widget loader not found")
     return FileResponse(
         file_path,
-        media_type="application/javascript"
+        media_type="application/javascript",
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "no-cache"
+        }
     )

@@ -33,10 +33,10 @@
                 <div class="auth-form active" id="authForm">
                     <h3>Login or Sign Up</h3>
                     <div class="social-login">
-                        <button onclick="window.spotifyChatWidget.handleOAuthLogin('spotify')" class="social-btn spotify-btn">
+                        <button class="social-btn spotify-btn" onclick="window.spotifyChatWidget.handleOAuthLogin('spotify')">
                             Continue with Spotify
                         </button>
-                        <button onclick="window.spotifyChatWidget.handleOAuthLogin('google')" class="social-btn google-btn">
+                        <button class="social-btn google-btn" onclick="window.spotifyChatWidget.handleOAuthLogin('google')">
                             Continue with Google
                         </button>
                     </div>
@@ -444,40 +444,85 @@
             constructor() {
                 this.apiBaseUrl = '${API_BASE_URL}';
                 this.userId = null;
+                this.oauthPopup = null;
+
+
+                window.addEventListener('message', (event) => {
+                    console.log('Widget received message:', event.data);
+                    // Accept messages from our API origin or from popups (*)
+                    if (event.origin !== this.apiBaseUrl && event.origin !== 'null') {
+                        console.log('Message accepted from:', event.origin);
+                    }
+
+                    if (event.data.type === 'oauth-success' && event.data.userId) {
+                        this.userId = event.data.userId;
+                        this.showChatInterface();
+                        
+                        // Close popup if it exists
+                        if (this.oauthPopup && !this.oauthPopup.closed) {
+                            this.oauthPopup.close();
+                        }
+                    }
+                });
+
                 this.setupEventListeners();
-                this.checkOAuthRedirect();
             }
 
+
             handleOAuthLogin(provider) {
+                console.log('Opening OAuth popup for:', provider);
+                // Prevent multiple popups
+                if (this.oauthPopup && !this.oauthPopup.closed) {
+                    this.oauthPopup.focus();
+                    return;
+                }
+
                 const width = 600;
                 const height = 700;
                 const left = (window.innerWidth - width) / 2;
                 const top = (window.innerHeight - height) / 2;
-                
-                window.open(
+
+                // Store popup reference
+                this.oauthPopup = window.open(
                     this.apiBaseUrl + '/api/v1/auth/' + provider,
                     'OAuth Login',
-                    \`width=\${width},height=\${height},left=\${left},top=\${top}\`
+                    'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top
                 );
+
+                // Monitor popup status
+                const popupMonitor = setInterval(() => {
+                    if (this.oauthPopup && this.oauthPopup.closed) {
+                        clearInterval(popupMonitor);
+                        this.oauthPopup = null;
+                    }
+                }, 1000);
+            }
+
+            showChatInterface() {
+                const authForm = document.querySelector('#authForm');
+                const chatInterface = document.querySelector('#chatInterface');
+                const messageInput = document.querySelector('#messageInput');
+
+                if (authForm) {
+                    console.log('Removing auth form...');
+                    authForm.classList.remove('active');
+                    authForm.style.display = 'none'; // Add this line
+
+                }
+                if (chatInterface) {
+                    console.log('Showing chat interface...');
+                    chatInterface.classList.add('active');
+                    authForm.style.display = 'none'; // Add this line
+                }
+                if (messageInput) {
+                    console.log('Showing message input...');
+                    messageInput.style.display = 'flex';
+                }
             }
 
     setupEventListeners() {
                 // Add OAuth buttons event listeners
-        const spotifyButton = document.querySelector('.spotify-btn');
-        if (spotifyButton) {
-            spotifyButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.handleOAuthRedirect('/api/v1/auth/spotify');
-            });
-        }
 
-        const googleButton = document.querySelector('.google-btn');
-        if (googleButton) {
-            googleButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.handleOAuthRedirect('/api/v1/auth/google');
-            });
-        }
         // Auth form submissions
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -659,14 +704,15 @@
         const message = input.value.trim();
         
         if (!message) return;
-    
+
         try {
             this.addMessage(message, 'user');
             input.value = '';
 
             this.showTypingIndicator();
-    
-            const response = await fetch('/api/v1/chat', {
+
+            // Use the full API URL including the base
+            const response = await fetch(this.apiBaseUrl + '/api/v1/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -679,16 +725,20 @@
 
             this.hideTypingIndicator();
 
-    
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
             const data = await response.json();
             this.addMessage(data.message, 'bot');
-    
+
             // Handle chat ending if user chose to end
             if (data.debug_info && data.debug_info.choice === "end_chat") {
                 this.endChat();
             }
         } catch (error) {
             console.error('Error sending message:', error);
+            this.hideTypingIndicator();
             this.addMessage('Sorry, an error occurred. Please try again.', 'bot');
         }
     }
@@ -905,8 +955,8 @@
         const left = (window.innerWidth - width) / 2;
         const top = (window.innerHeight - height) / 2;
         
-        window.open(
-            // Use this.apiBaseUrl for cross-domain support
+        // Use escaped template literals for URLs
+        const popup = window.open(
             \`\${this.apiBaseUrl}/api/v1/auth/\${provider}\`,
             'OAuth Login',
             \`width=\${width},height=\${height},left=\${left},top=\${top}\`
