@@ -96,12 +96,8 @@ class OAuthManager:
 
     def handle_google_callback(self, code: str, state: str) -> Tuple[bool, Dict]:
         """Handle Google OAuth callback"""
-        stored_state = self._get_oauth_state()
-        if not stored_state or stored_state != state:
-            return False, {"error": "Invalid state parameter"}
-
         try:
-            # Exchange code for tokens
+            # Get tokens from Google using the code
             token_response = requests.post(
                 "https://oauth2.googleapis.com/token",
                 data={
@@ -114,7 +110,7 @@ class OAuthManager:
             )
             
             if token_response.status_code != 200:
-                return False, {"error": "Failed to get access token"}
+                raise Exception("Failed to get access token")
             
             tokens = token_response.json()
             
@@ -125,18 +121,53 @@ class OAuthManager:
             )
             
             if user_response.status_code != 200:
-                return False, {"error": "Failed to get user info"}
+                raise Exception("Failed to get user info")
             
-            google_user = user_response.json()
-            user_data = self._upsert_oauth_user("google", google_user, tokens)
+            user_info = user_response.json()
             
-            # Return success with redirect URL
-            return True, {
-                "user": user_data,
-                "redirect_url": f"{self.widget_url}?logged_in=true&user_id={user_data['id']}"
-            }
+            # First try to find existing user
+            existing_user = self.supabase.table('profiles').select('*').eq('email', user_info['email']).execute()
+            
+            if existing_user.data:
+                # Update existing user
+                user_id = existing_user.data[0]['id']
+                self.supabase.table('profiles').update({
+                    'last_seen': datetime.now(timezone.utc).isoformat(),
+                    'google_id': user_info['id'],
+                    'google_access_token': tokens['access_token'],
+                    'google_refresh_token': tokens.get('refresh_token'),
+                }).eq('id', user_id).execute()
+                
+                return True, {"user": {"id": user_id, "email": user_info['email']}}
+            else:
+                # Create new user in auth.users first
+                try:
+                    auth_user = self.supabase.auth.sign_up({
+                        "email": user_info['email'],
+                        "password": f"oauth_{secrets.token_urlsafe(16)}"  # Random password
+                    })
+                    user_id = auth_user.user.id
+                    
+                    # Create profile
+                    profile_data = {
+                        'id': user_id,
+                        'email': user_info['email'],
+                        'google_id': user_info['id'],
+                        'google_access_token': tokens['access_token'],
+                        'google_refresh_token': tokens.get('refresh_token'),
+                        'created_at': datetime.now(timezone.utc).isoformat(),
+                        'last_seen': datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    self.supabase.table('profiles').insert(profile_data).execute()
+                    
+                    return True, {"user": {"id": user_id, "email": user_info['email']}}
+                except Exception as e:
+                    print(f"Error creating user: {str(e)}")
+                    raise
 
         except Exception as e:
+            print(f"OAuth error: {str(e)}")
             return False, {"error": str(e)}
 
     def _upsert_oauth_user(self, provider: str, user_info: dict, tokens: dict) -> dict:
