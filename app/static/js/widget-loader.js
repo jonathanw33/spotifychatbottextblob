@@ -1,6 +1,6 @@
 // app/static/js/widget-loader.js
 (function() {
-    const API_BASE_URL = 'http://localhost:8000';
+    const API_BASE_URL = 'https://spotify-bot.azurewebsites.net/';
     
     // Create widget container
     const container = document.createElement('div');

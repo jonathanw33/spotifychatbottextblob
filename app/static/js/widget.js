@@ -1,29 +1,56 @@
-// app/static/js/widget.js
 class SpotifyChatWidget {
     constructor() {
+        this.apiBaseUrl = 'https://spotify-bot.azurewebsites.net/';  // Change this for production
         this.userId = null;
-        this.setupEventListeners();
-        this.checkOAuthRedirect(); // Add this new method call
+        this.oauthPopup = null;
 
+        // Listen for OAuth success message
+        window.addEventListener('message', (event) => {
+            console.log('Widget received message:', event.data);
+            if (event.data.type === 'oauth-success' && event.data.userId) {
+                this.userId = event.data.userId;
+                this.showChatInterface();
+                
+                // Close popup if it exists
+                if (this.oauthPopup && !this.oauthPopup.closed) {
+                    this.oauthPopup.close();
+                }
+            }
+        });
+
+        this.setupEventListeners();
+    }
+
+    handleOAuthLogin(provider) {
+        console.log('Opening OAuth popup for:', provider);
+        // Prevent multiple popups
+        if (this.oauthPopup && !this.oauthPopup.closed) {
+            this.oauthPopup.focus();
+            return;
+        }
+
+        const width = 600;
+        const height = 700;
+        const left = (window.innerWidth - width) / 2;
+        const top = (window.innerHeight - height) / 2;
+
+        // Store popup reference
+        this.oauthPopup = window.open(
+            `${this.apiBaseUrl}/api/v1/auth/${provider}`,
+            'OAuth Login',
+            `width=${width},height=${height},left=${left},top=${top}`
+        );
+
+        // Monitor popup status
+        const popupMonitor = setInterval(() => {
+            if (this.oauthPopup && this.oauthPopup.closed) {
+                clearInterval(popupMonitor);
+                this.oauthPopup = null;
+            }
+        }, 1000);
     }
 
     setupEventListeners() {
-                // Add OAuth buttons event listeners
-        const spotifyButton = document.querySelector('.spotify-btn');
-        if (spotifyButton) {
-            spotifyButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.handleOAuthRedirect('/api/v1/auth/spotify');
-            });
-        }
-
-        const googleButton = document.querySelector('.google-btn');
-        if (googleButton) {
-            googleButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.handleOAuthRedirect('/api/v1/auth/google');
-            });
-        }
         // Auth form submissions
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -35,50 +62,7 @@ class SpotifyChatWidget {
             }
         });
 
-        document.querySelector('.minimize-btn').addEventListener('click', () => {
-            const widget = document.querySelector('.spotify-chat-widget');
-            const content = document.querySelector('.widget-content');
-            const messageInput = document.querySelector('.message-input');
-            
-            if (widget.style.height === '40px') {
-                widget.style.height = '500px';
-                content.style.display = 'block';
-                if (this.userId) messageInput.style.display = 'flex';
-            } else {
-                widget.style.height = '40px';
-                content.style.display = 'none';
-                messageInput.style.display = 'none';
-            }
-        });
-
-        document.querySelector('.open-widget-btn').addEventListener('click', () => {
-            const widget = document.querySelector('.spotify-chat-widget');
-            const opener = document.getElementById('widget-opener');
-            widget.style.display = 'flex';
-            widget.style.height = '500px';
-            opener.style.display = 'none';
-            
-            // If user was previously chatting, show the chat interface
-            if (this.userId) {
-                document.querySelector('.widget-content').style.display = 'block';
-                document.getElementById('messageInput').style.display = 'flex';
-            }
-        });
-    
-        document.querySelector('.close-btn').addEventListener('click', () => {
-            const widget = document.querySelector('.spotify-chat-widget');
-            const opener = document.getElementById('widget-opener');
-            
-            // Fade out widget
-            widget.style.opacity = '0';
-            
-            setTimeout(() => {
-                widget.style.display = 'none';
-                opener.style.display = 'block';
-                widget.style.opacity = '1';
-            }, 300);
-        });
-
+        // Minimize button
         document.querySelector('.minimize-btn').addEventListener('click', () => {
             const widget = document.querySelector('.spotify-chat-widget');
             const content = document.querySelector('.widget-content');
@@ -89,7 +73,7 @@ class SpotifyChatWidget {
                 setTimeout(() => {
                     content.style.display = 'block';
                     if (this.userId) messageInput.style.display = 'flex';
-                }, 50); // Small delay for smoother animation
+                }, 50);
             } else {
                 widget.style.height = '40px';
                 content.style.opacity = '0';
@@ -101,6 +85,33 @@ class SpotifyChatWidget {
                     content.style.opacity = '1';
                     messageInput.style.opacity = '1';
                 }, 200);
+            }
+        });
+
+        // Close button
+        document.querySelector('.close-btn').addEventListener('click', () => {
+            const widget = document.querySelector('.spotify-chat-widget');
+            const opener = document.getElementById('widget-opener');
+            widget.style.opacity = '0';
+            
+            setTimeout(() => {
+                widget.style.display = 'none';
+                opener.style.display = 'block';
+                widget.style.opacity = '1';
+            }, 300);
+        });
+
+        // Open widget button
+        document.querySelector('.open-widget-btn').addEventListener('click', () => {
+            const widget = document.querySelector('.spotify-chat-widget');
+            const opener = document.getElementById('widget-opener');
+            widget.style.display = 'flex';
+            widget.style.height = '500px';
+            opener.style.display = 'none';
+            
+            if (this.userId) {
+                document.querySelector('.widget-content').style.display = 'block';
+                document.getElementById('messageInput').style.display = 'flex';
             }
         });
 
@@ -117,25 +128,6 @@ class SpotifyChatWidget {
         });
     }
 
-    // Add new OAuth-related methods
-    handleOAuthRedirect(authUrl) {
-        // Store current widget state if needed
-        localStorage.setItem('widgetState', 'opened');
-        // Redirect to OAuth provider
-        window.location.href = authUrl;
-    }
-
-    checkOAuthRedirect() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('logged_in') === 'true' && urlParams.has('user_id')) {
-            this.userId = urlParams.get('user_id');
-            this.showChatInterface();
-            // Clean up URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-    }
-
-
     async handleLogin(form) {
         console.log("Login attempt starting...");
         this.setLoading(true);
@@ -143,8 +135,7 @@ class SpotifyChatWidget {
         const password = form.querySelector('input[type="password"]').value;
 
         try {
-            console.log("Making login request to:", '/api/v1/auth/signin');
-            const response = await fetch('/api/v1/auth/signin', {
+            const response = await fetch(`${this.apiBaseUrl}/api/v1/auth/signin`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -152,10 +143,7 @@ class SpotifyChatWidget {
                 body: JSON.stringify({ email, password }),
             });
 
-            console.log("Login response status:", response.status);
             const data = await response.json();
-            console.log("Login response data:", data);
-
             if (data.success) {
                 this.userId = data.user.id;
                 this.showChatInterface();
@@ -176,7 +164,7 @@ class SpotifyChatWidget {
         const password = form.querySelector('input[type="password"]').value;
 
         try {
-            const response = await fetch('/api/v1/auth/signup', {
+            const response = await fetch(`${this.apiBaseUrl}/api/v1/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -185,7 +173,6 @@ class SpotifyChatWidget {
             });
 
             const data = await response.json();
-
             if (data.success) {
                 this.userId = data.user.id;
                 this.showChatInterface();
@@ -205,14 +192,13 @@ class SpotifyChatWidget {
         const message = input.value.trim();
         
         if (!message) return;
-    
+
         try {
             this.addMessage(message, 'user');
             input.value = '';
-
             this.showTypingIndicator();
-    
-            const response = await fetch('/api/v1/chat', {
+
+            const response = await fetch(`${this.apiBaseUrl}/api/v1/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -225,253 +211,244 @@ class SpotifyChatWidget {
 
             this.hideTypingIndicator();
 
-    
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
             const data = await response.json();
             this.addMessage(data.message, 'bot');
-    
-            // Handle chat ending if user chose to end
+
             if (data.debug_info && data.debug_info.choice === "end_chat") {
                 this.endChat();
             }
         } catch (error) {
             console.error('Error sending message:', error);
+            this.hideTypingIndicator();
             this.addMessage('Sorry, an error occurred. Please try again.', 'bot');
         }
     }
 
-    endChat() {
-        const chatMessages = document.getElementById('chatMessages');
-        const messageInput = document.querySelector('.message-input');
-        messageInput.style.display = 'none';
-        
-        // Add reopen button when chat ends
-        this.addReopenButton();
-        
-        // Optional: Add a message that chat has ended
-        const endMessage = document.createElement('div');
-        endMessage.classList.add('chat-message', 'system-message');
-        endMessage.textContent = 'Chat ended. Support team will contact you soon.';
-        chatMessages.appendChild(endMessage);
-    }
+endChat() {
+const chatMessages = document.getElementById('chatMessages');
+const messageInput = document.querySelector('.message-input');
+messageInput.style.display = 'none';
+
+// Add reopen button when chat ends
+this.addReopenButton();
+
+// Optional: Add a message that chat has ended
+const endMessage = document.createElement('div');
+endMessage.classList.add('chat-message', 'system-message');
+endMessage.textContent = 'Chat ended. Support team will contact you soon.';
+chatMessages.appendChild(endMessage);
+}
 
 
-    addReopenButton() {
-        const container = document.createElement('div');
-        container.className = 'reopen-container';
+addReopenButton() {
+const container = document.createElement('div');
+container.className = 'reopen-container';
+
+const button = document.createElement('button');
+button.textContent = 'Reopen Chat';
+button.className = 'reopen-btn';
+button.disabled = true;
+
+const countdownDiv = document.createElement('div');
+countdownDiv.className = 'countdown';
+
+container.appendChild(button);
+container.appendChild(countdownDiv);
+document.getElementById('chatMessages').appendChild(container);
+
+// Set countdown time (5 minutes = 300 seconds)
+let timeLeft = 300;
+
+const updateCountdown = () => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    countdownDiv.textContent = `Can reopen chat in ${minutes}:${seconds.toString().padStart(2, '0')}`;
     
-        const button = document.createElement('button');
+    if (timeLeft <= 0) {
+        button.disabled = false;
+        countdownDiv.textContent = 'You can now reopen the chat';
+        countdownDiv.classList.add('complete');
+        button.classList.add('ready'); // Add ready class for animation
+        clearInterval(timer);
+
+        // Add attention-grabbing effect
+        button.addEventListener('mouseleave', () => {
+            // Reset animation
+            button.style.animation = 'none';
+            button.offsetHeight; // Trigger reflow
+            button.style.animation = null;
+        });
+    }
+    timeLeft--;
+};
+
+// Start countdown
+updateCountdown();
+const timer = setInterval(updateCountdown, 1000);
+
+button.onclick = async () => {
+    try {
+        button.disabled = true; // Prevent double-clicks
+        button.textContent = 'Reopening...';
+        
+        const response = await fetch('/api/v1/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: this.userId,
+                message: '/reopen'
+            })
+        });
+        
+        const data = await response.json();
+        if (data.debug_info.chat_reopened) {
+            container.style.animation = 'fadeOut 0.3s ease-out forwards';
+            setTimeout(() => {
+                document.querySelector('.message-input').style.display = 'flex';
+                container.remove();
+                this.addMessage("Chat reopened. How can I help you?", 'bot');
+            }, 300);
+        }
+    } catch (error) {
+        console.error('Error reopening chat:', error);
+        this.addMessage('Sorry, an error occurred while trying to reopen the chat.', 'bot');
+        button.disabled = false;
         button.textContent = 'Reopen Chat';
-        button.className = 'reopen-btn';
-        button.disabled = true;
-    
-        const countdownDiv = document.createElement('div');
-        countdownDiv.className = 'countdown';
-        
-        container.appendChild(button);
-        container.appendChild(countdownDiv);
-        document.getElementById('chatMessages').appendChild(container);
-    
-        // Set countdown time (5 minutes = 300 seconds)
-        let timeLeft = 300;
-        
-        const updateCountdown = () => {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            countdownDiv.textContent = `Can reopen chat in ${minutes}:${seconds.toString().padStart(2, '0')}`;
-            
-            if (timeLeft <= 0) {
-                button.disabled = false;
-                countdownDiv.textContent = 'You can now reopen the chat';
-                countdownDiv.classList.add('complete');
-                button.classList.add('ready'); // Add ready class for animation
-                clearInterval(timer);
-    
-                // Add attention-grabbing effect
-                button.addEventListener('mouseleave', () => {
-                    // Reset animation
-                    button.style.animation = 'none';
-                    button.offsetHeight; // Trigger reflow
-                    button.style.animation = null;
-                });
-            }
-            timeLeft--;
-        };
-    
-        // Start countdown
-        updateCountdown();
-        const timer = setInterval(updateCountdown, 1000);
-    
-        button.onclick = async () => {
-            try {
-                button.disabled = true; // Prevent double-clicks
-                button.textContent = 'Reopening...';
-                
-                const response = await fetch('/api/v1/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: this.userId,
-                        message: '/reopen'
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.debug_info.chat_reopened) {
-                    container.style.animation = 'fadeOut 0.3s ease-out forwards';
-                    setTimeout(() => {
-                        document.querySelector('.message-input').style.display = 'flex';
-                        container.remove();
-                        this.addMessage("Chat reopened. How can I help you?", 'bot');
-                    }, 300);
-                }
-            } catch (error) {
-                console.error('Error reopening chat:', error);
-                this.addMessage('Sorry, an error occurred while trying to reopen the chat.', 'bot');
-                button.disabled = false;
-                button.textContent = 'Reopen Chat';
-            }
-        };
     }
+};
+}
 
-    createMessageElement(message, type) {
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('chat-message', `${type}-message`);
-        
-        // Create message content container
-        const contentDiv = document.createElement('div');
-        contentDiv.classList.add('message-content');
-        contentDiv.textContent = message;
-        messageDiv.appendChild(contentDiv);
-        
-        // Add timestamp
-        const timestamp = document.createElement('div');
-        timestamp.classList.add('message-timestamp');
-        const time = new Date().toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-        timestamp.textContent = time;
-        messageDiv.appendChild(timestamp);
-        
-        // Add agent indicator for bot messages
-        if (type === 'bot') {
-            const agentIndicator = document.createElement('div');
-            agentIndicator.classList.add('agent-indicator');
-            agentIndicator.textContent = 'Spotify Support';
-            messageDiv.appendChild(agentIndicator);
-        }
-        
-        return messageDiv;
-    }
+createMessageElement(message, type) {
+const messageDiv = document.createElement('div');
+messageDiv.classList.add('chat-message', type + '-message');
 
-    addMessage(message, type) {
-        const chatMessages = document.getElementById('chatMessages');
-        if (!chatMessages) {
-            console.error('Chat messages container not found!');
-            return;
-        }
-        
-        const messageElement = this.createMessageElement(message, type);
-        chatMessages.appendChild(messageElement);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // Debug log
-        console.log('Added message:', {
-            type,
-            hasTimestamp: !!messageElement.querySelector('.message-timestamp'),
-            timestampText: messageElement.querySelector('.message-timestamp')?.textContent
-        });
-    }
+// Create message content container
+const contentDiv = document.createElement('div');
+contentDiv.classList.add('message-content');
+contentDiv.textContent = message;
+messageDiv.appendChild(contentDiv);
 
-        // Add new method for typing indicator
-    showTypingIndicator() {
-        const indicator = document.getElementById('typingIndicator');
-        indicator.style.display = 'block';
-        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
-    }
+// Add timestamp
+const timestamp = document.createElement('div');
+timestamp.classList.add('message-timestamp');
+const time = new Date().toLocaleTimeString([], { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+});
+timestamp.textContent = time;
+messageDiv.appendChild(timestamp);
 
-    hideTypingIndicator() {
-        document.getElementById('typingIndicator').style.display = 'none';
-    }
+// Add agent indicator for bot messages
+if (type === 'bot') {
+    const agentIndicator = document.createElement('div');
+    agentIndicator.classList.add('agent-indicator');
+    agentIndicator.textContent = 'Spotify Support';
+    messageDiv.appendChild(agentIndicator);
+}
 
-    showChatInterface() {
-        document.getElementById('authForm').classList.remove('active');
-        document.getElementById('chatInterface').classList.add('active');
-        document.getElementById('messageInput').style.display = 'flex';
-        const errorDiv = document.getElementById('authError');
-        if (errorDiv) {
-            errorDiv.style.display = 'none';
-        }
-    }
+return messageDiv;
+}
 
-    toggleAuthForms() {
-        const loginForm = document.getElementById('loginForm');
-        const signupText = document.getElementById('showSignup');
-        
-        if (loginForm.dataset.mode === 'signup') {
-            loginForm.dataset.mode = 'login';
-            signupText.textContent = 'Sign up';
-            loginForm.querySelector('button').textContent = 'Login';
-        } else {
-            loginForm.dataset.mode = 'signup';
-            signupText.textContent = 'Login';
-            loginForm.querySelector('button').textContent = 'Sign up';
-        }
-    }
+addMessage(message, type) {
+const chatMessages = document.getElementById('chatMessages');
+if (!chatMessages) {
+    console.error('Chat messages container not found!');
+    return;
+}
 
-    showError(message) {
-        const errorDiv = document.getElementById('authError') || this.createErrorDiv();
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-        setTimeout(() => {
-            errorDiv.style.display = 'none';
-        }, 5000);
-    }
+const messageElement = this.createMessageElement(message, type);
+chatMessages.appendChild(messageElement);
+chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    createErrorDiv() {
-        const errorDiv = document.createElement('div');
-        errorDiv.id = 'authError';
-        errorDiv.style.cssText = `
-            color: #e74c3c;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            background: #fde8e8;
-            display: none;
-        `;
-        const form = document.getElementById('loginForm');
-        form.insertBefore(errorDiv, form.firstChild);
-        return errorDiv;
-    }
+// Debug log
+console.log('Added message:', {
+    type,
+    hasTimestamp: !!messageElement.querySelector('.message-timestamp'),
+    timestampText: messageElement.querySelector('.message-timestamp')?.textContent
+});
+}
 
-    handleOAuthLogin(provider) {
-        // Open OAuth in new window/tab instead of inside iframe
-        const width = 600;
-        const height = 700;
-        const left = (window.innerWidth - width) / 2;
-        const top = (window.innerHeight - height) / 2;
-        
-        window.open(
-            `/api/v1/auth/${provider}`,
-            'OAuth Login',
-            `width=${width},height=${height},left=${left},top=${top}`
-        );
-    }
+// Add new method for typing indicator
+showTypingIndicator() {
+const indicator = document.getElementById('typingIndicator');
+indicator.style.display = 'block';
+document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+}
 
-    setLoading(isLoading) {
-        const submitButton = document.querySelector('#loginForm button');
-        const loadingSpinner = document.getElementById('loadingSpinner') || this.createLoadingSpinner();
-        
-        if (isLoading) {
-            submitButton.disabled = true;
-            loadingSpinner.style.display = 'inline-block';
-            submitButton.textContent = submitButton.dataset.mode === 'signup' ? 'Signing up...' : 'Logging in...';
-        } else {
-            submitButton.disabled = false;
-            loadingSpinner.style.display = 'none';
-            submitButton.textContent = submitButton.dataset.mode === 'signup' ? 'Sign up' : 'Login';
-        }
-    }
+hideTypingIndicator() {
+document.getElementById('typingIndicator').style.display = 'none';
+}
+
+showChatInterface() {
+document.getElementById('authForm').classList.remove('active');
+document.getElementById('chatInterface').classList.add('active');
+document.getElementById('messageInput').style.display = 'flex';
+const errorDiv = document.getElementById('authError');
+if (errorDiv) {
+    errorDiv.style.display = 'none';
+}
+}
+
+toggleAuthForms() {
+const loginForm = document.getElementById('loginForm');
+const signupText = document.getElementById('showSignup');
+
+if (loginForm.dataset.mode === 'signup') {
+    loginForm.dataset.mode = 'login';
+    signupText.textContent = 'Sign up';
+    loginForm.querySelector('button').textContent = 'Login';
+} else {
+    loginForm.dataset.mode = 'signup';
+    signupText.textContent = 'Login';
+    loginForm.querySelector('button').textContent = 'Sign up';
+}
+}
+
+showError(message) {
+const errorDiv = document.getElementById('authError') || this.createErrorDiv();
+errorDiv.textContent = message;
+errorDiv.style.display = 'block';
+setTimeout(() => {
+    errorDiv.style.display = 'none';
+}, 5000);
+}
+
+createErrorDiv() {
+const errorDiv = document.createElement('div');
+errorDiv.id = 'authError';
+// Using escaped backticks \` for inner template literal
+errorDiv.style.cssText = `
+    color: #e74c3c;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    background: #fde8e8;
+    display: none;
+`;
+const form = document.getElementById('loginForm');
+form.insertBefore(errorDiv, form.firstChild);
+return errorDiv;
+}
+
+
+setLoading(isLoading) {
+const submitButton = document.querySelector('#loginForm button');
+const loadingSpinner = document.getElementById('loadingSpinner') || this.createLoadingSpinner();
+
+if (isLoading) {
+    submitButton.disabled = true;
+    loadingSpinner.style.display = 'inline-block';
+    submitButton.textContent = submitButton.dataset.mode === 'signup' ? 'Signing up...' : 'Logging in...';
+} else {
+    submitButton.disabled = false;
+    loadingSpinner.style.display = 'none';
+    submitButton.textContent = submitButton.dataset.mode === 'signup' ? 'Sign up' : 'Login';
+}
+}
 
     createLoadingSpinner() {
         const spinner = document.createElement('div');
@@ -486,21 +463,21 @@ class SpotifyChatWidget {
             animation: spin 1s linear infinite;
             margin-left: 10px;
         `;
+
         const style = document.createElement('style');
-        style.textContent = `
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        `;
+        // Use string concatenation for keyframes instead of template literals
+        style.textContent = 
+            "@keyframes spin {" +
+            "   0% { transform: rotate(0deg); }" +
+            "   100% { transform: rotate(360deg); }" +
+            "}";
+
         document.head.appendChild(style);
         const submitButton = document.querySelector('#loginForm button');
         submitButton.parentNode.insertBefore(spinner, submitButton.nextSibling);
         return spinner;
     }
 }
-
-
 
 // Initialize widget when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

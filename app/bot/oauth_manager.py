@@ -163,6 +163,17 @@ class OAuthManager:
                     
                     return True, {"user": {"id": user_id, "email": user_info['email']}}
                 except Exception as e:
+                    if "User already registered" in str(e):
+                        # Try to sign in with email
+                        try:
+                            auth_data = self.supabase.auth.sign_in_with_password({
+                                "email": user_info['email'],
+                                "password": f"oauth_{secrets.token_urlsafe(16)}"  # Try with a new password
+                            })
+                            user_id = auth_data.user.id
+                            return True, {"user": {"id": user_id, "email": user_info['email']}}
+                        except:
+                            print("Failed to sign in existing user")
                     print(f"Error creating user: {str(e)}")
                     raise
 
