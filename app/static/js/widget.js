@@ -20,7 +20,7 @@ class SpotifyChatWidget {
         this.welcomeMessages = {
             support: "👋 Hi there! I'm your Spotify Support assistant (powered by a decision tree, so I might be a bit... quirky! 😅). Fun fact: if you want to test our support ticket system, try sending me three angry messages - I can take it, no hard feelings! 🎯\n\nFor a smarter, more natural conversation about music, try switching to AI mode above! 🎵",
             
-            ai: "🎵 Hey! I'm MusicMate, your AI music companion powered by Groq! Unlike my support mode friend, I can have natural, flowing conversations about anything music-related. Need music recommendations? Want to discuss your favorite artists? Or just chat about how music connects to life? I'm all ears! 🎸\n\nLet's make some musical magic happen! ✨"
+            ai: "🎵 Hey there! I'm MusicMate, your AI music companion powered by Groq! While I can't peek at your Spotify playlists (my creator's still figuring that part out 😅), I'd love to explore how music can enhance your website's vibe! I especially enjoy music trivia - try testing my knowledge about your favorite bands! What kind of site are you working on? 🎸✨"
         };
 
         if (document.readyState === 'loading') {
