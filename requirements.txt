@@ -14,3 +14,4 @@ pydantic-settings==2.1.0
 jinja2
 aiofiles
 python-multipart
+groq

@@ -362,6 +362,130 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+
+                /* Add to your existing CSS */
+        .mode-toggle {
+            position: sticky;
+            top: 0;
+            background-color: #f8f8f8;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Toggle switch styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-right: 10px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #1DB954; /* Spotify green for support mode */
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #7B1FA2; /* Different color for AI mode */
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        .mode-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+        /* Add to your existing CSS */
+        #chatMessages {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .chat-message {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .mode-toggle {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .mode-label {
+            transition: opacity 0.15s ease;
+        }
+        
+        /* Add a subtle indicator for current mode */
+        .chat-interface::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .chat-interface[data-mode="support"]::before {
+            background-color: #1DB954;
+        }
+        
+        .chat-interface[data-mode="ai"]::before {
+            background-color: #7B1FA2;
+        }
+        
+        /* Optional: Add animation for toggle switch */
+        .slider:before {
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        
+        /* Add loading animation for mode switch */
+        @keyframes modeSwitch {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+        
+        .mode-switching .chat-interface {
+            animation: modeSwitch 0.3s ease;
+        }
+                
     </style>
 </head>
 <body>
@@ -407,6 +531,14 @@
             </div>
             
             <div class="chat-interface" id="chatInterface">
+                <div class="mode-toggle">
+                    <label class="switch">
+                        <input type="checkbox" id="chatModeToggle" 
+                               onchange="window.spotifyChatWidget.handleModeToggle(this)">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="mode-label">🎧 Support Mode</span>
+                </div>
                 <div id="chatMessages"></div>
             </div>
         </div>

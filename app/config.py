@@ -9,7 +9,11 @@ class Settings(BaseSettings):
     # Supabase Settings
     SUPABASE_URL: str
     SUPABASE_KEY: str
-    
+    SPOTIFY_CLIENT_ID: str
+    SPOTIFY_CLIENT_SECRET: str
+    BASE_URL: str = "http://localhost:8000"  # Default for local development
+    GROQ_API_KEY: str
+
     # CORS Settings
     BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",

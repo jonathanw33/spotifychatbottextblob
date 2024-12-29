@@ -1,8 +1,35 @@
 class SpotifyChatWidget {
     constructor() {
-        this.apiBaseUrl = 'https://spotify-bot.azurewebsites.net/';  // Change this for production
+        this.apiBaseUrl = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8000'
+            : 'https://spotify-bot.azurewebsites.net';
         this.userId = null;
         this.oauthPopup = null;
+        this.isAiMode = false;
+        this.chatHistory = {
+            support: [],
+            ai: []
+        };
+        // Add mode persistence
+        this.restoreMode();
+        // Add event listener for Enter key
+        this.setupEnterKeyListener();
+        this.currentMode = 'support';
+
+        // Define welcome messages
+        this.welcomeMessages = {
+            support: "👋 Hi there! I'm your Spotify Support assistant (powered by a decision tree, so I might be a bit... quirky! 😅). Fun fact: if you want to test our support ticket system, try sending me three angry messages - I can take it, no hard feelings! 🎯\n\nFor a smarter, more natural conversation about music, try switching to AI mode above! 🎵",
+            
+            ai: "🎵 Hey! I'm MusicMate, your AI music companion powered by Groq! Unlike my support mode friend, I can have natural, flowing conversations about anything music-related. Need music recommendations? Want to discuss your favorite artists? Or just chat about how music connects to life? I'm all ears! 🎸\n\nLet's make some musical magic happen! ✨"
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.setupEventListeners());
+        } else {
+            this.setupEventListeners();
+        }
+
+
 
         // Listen for OAuth success message
         window.addEventListener('message', (event) => {
@@ -50,7 +77,80 @@ class SpotifyChatWidget {
         }, 1000);
     }
 
+    restoreMode() {
+        // Restore previous mode from localStorage
+        const savedMode = localStorage.getItem('chatbotMode');
+        if (savedMode === 'ai') {
+            document.getElementById('chatModeToggle').checked = true;
+            this.currentMode = 'ai';
+            this.updateModeLabel('ai');
+        }
+    }
+
+    handleModeToggle(checkbox) {
+        const newMode = checkbox.checked ? 'ai' : 'support';
+        
+        // Save mode to localStorage
+        localStorage.setItem('chatbotMode', newMode);
+        
+        // Clear chat messages
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = '';
+        
+        // Update current mode
+        this.currentMode = newMode;
+        
+        // Update mode label
+        this.updateModeLabel(newMode);
+        
+        // Add welcome message for the new mode
+        this.addMessage(this.welcomeMessages[newMode], 'bot');
+    }
+
+    updateModeLabel(mode) {
+        const modeLabel = document.querySelector('.mode-label');
+        modeLabel.textContent = mode === 'ai' ? '🎵 AI Music Assistant' : '🎧 Support Mode';
+    }
+
+    setupEnterKeyListener() {
+        const messageInput = document.querySelector('.message-input input');
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent default Enter key behavior
+                this.sendMessage();
+            }
+        });
+    }
+
     setupEventListeners() {
+        const modeToggle = document.getElementById('chatModeToggle');
+        if (modeToggle) {
+            modeToggle.addEventListener('change', (e) => {
+                const chatMessages = document.getElementById('chatMessages');
+                const newMode = e.target.checked ? 'ai' : 'support';
+                
+                // Clear chat display
+                chatMessages.innerHTML = '';
+                
+                // Update mode
+                this.currentMode = newMode;
+                
+                // If no history exists, add welcome messages
+                if (this.chatHistory[newMode].length === 0) {
+                    this.addMessage(this.welcomeMessages[newMode], 'bot');
+
+                } else {
+                    // Display existing history
+                    this.chatHistory[newMode].forEach(msg => {
+                        this.displayMessage(msg.message, msg.type);
+                    });
+                }
+
+                // Update mode label
+                const modeLabel = document.querySelector('.mode-label');
+                modeLabel.textContent = newMode === 'ai' ? '🎵 AI Music Assistant' : '🎧 Support Mode';
+            });
+        }
         // Auth form submissions
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -192,37 +292,69 @@ class SpotifyChatWidget {
         const message = input.value.trim();
         
         if (!message) return;
-
+    
         try {
+            // Log the request payload
+            const requestPayload = {
+                user_id: this.userId,
+                message: message,
+                mode: this.currentMode
+            };
+            console.log('Request Payload:', requestPayload);
+    
             this.addMessage(message, 'user');
             input.value = '';
             this.showTypingIndicator();
 
+            this.scrollToBottom();
+
+    
             const response = await fetch(`${this.apiBaseUrl}/api/v1/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    user_id: this.userId,
-                    message: message
-                }),
+                body: JSON.stringify(requestPayload),
             });
-
+    
+            // Log raw response
+            console.log('Raw Response:', response);
+    
+            const responseText = await response.text(); // Get response as text first
+            console.log('Response Text:', responseText);
+    
+            // Try to parse the response
+            let data;
+            try {
+                data = JSON.parse(responseText);
+                console.log('Parsed Response Data:', data);
+            } catch (e) {
+                console.error('Error parsing response:', e);
+                console.log('Invalid JSON:', responseText);
+            }
+    
             this.hideTypingIndicator();
-
+    
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-
-            const data = await response.json();
-            this.addMessage(data.message, 'bot');
-
-            if (data.debug_info && data.debug_info.choice === "end_chat") {
+    
+            if (data) {
+                console.log('Bot Message:', data.message);
+                console.log('Debug Info:', data.debug_info);
+                this.addMessage(data.message, 'bot');
+            }
+    
+            // Only handle support-specific features in support mode
+            if (this.currentMode === 'support' && data?.debug_info?.choice === "end_chat") {
                 this.endChat();
             }
         } catch (error) {
-            console.error('Error sending message:', error);
+            console.error('Detailed Error:', {
+                message: error.message,
+                stack: error.stack,
+                toString: error.toString()
+            });
             this.hideTypingIndicator();
             this.addMessage('Sorry, an error occurred. Please try again.', 'bot');
         }
@@ -354,22 +486,34 @@ return messageDiv;
 }
 
 addMessage(message, type) {
-const chatMessages = document.getElementById('chatMessages');
-if (!chatMessages) {
-    console.error('Chat messages container not found!');
-    return;
+    // Add to chat history array
+    this.chatHistory[this.currentMode].push({
+        message: message,
+        type: type,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Display the message
+    this.displayMessage(message, type);
 }
 
-const messageElement = this.createMessageElement(message, type);
-chatMessages.appendChild(messageElement);
-chatMessages.scrollTop = chatMessages.scrollHeight;
+displayMessage(message, type) {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
 
-// Debug log
-console.log('Added message:', {
-    type,
-    hasTimestamp: !!messageElement.querySelector('.message-timestamp'),
-    timestampText: messageElement.querySelector('.message-timestamp')?.textContent
-});
+    const messageElement = this.createMessageElement(message, type);
+    chatMessages.appendChild(messageElement);
+    
+    // Auto-scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Add a method to scroll to bottom on demand
+scrollToBottom() {
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 }
 
 // Add new method for typing indicator
@@ -384,13 +528,29 @@ document.getElementById('typingIndicator').style.display = 'none';
 }
 
 showChatInterface() {
-document.getElementById('authForm').classList.remove('active');
-document.getElementById('chatInterface').classList.add('active');
-document.getElementById('messageInput').style.display = 'flex';
-const errorDiv = document.getElementById('authError');
-if (errorDiv) {
-    errorDiv.style.display = 'none';
-}
+    document.getElementById('authForm').classList.remove('active');
+    document.getElementById('chatInterface').classList.add('active');
+    document.getElementById('messageInput').style.display = 'flex';
+
+    // Show initial messages if no history exists
+    if (this.chatHistory[this.currentMode].length === 0) {
+        this.addMessage(this.welcomeMessages[this.currentMode], 'bot');
+        setTimeout(() => {
+            this.addMessage(this.followUpMessages[this.currentMode], 'bot');
+        }, 500);
+    } else {
+        // Display existing history
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = '';
+        this.chatHistory[this.currentMode].forEach(msg => {
+            this.displayMessage(msg.message, msg.type);
+        });
+    }
+
+    const errorDiv = document.getElementById('authError');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
 }
 
 toggleAuthForms() {
@@ -434,7 +594,41 @@ form.insertBefore(errorDiv, form.firstChild);
 return errorDiv;
 }
 
+showChatInterface() {
+    document.getElementById('authForm').classList.remove('active');
+    document.getElementById('chatInterface').classList.add('active');
+    document.getElementById('messageInput').style.display = 'flex';
+    
+    // Show initial messages
+    this.showModeMessages(this.currentMode);
+    
+    const errorDiv = document.getElementById('authError');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
+}
 
+async showModeMessages(mode) {
+    const chatMessages = document.getElementById('chatMessages');
+    
+    // Clear any existing messages if this is the first time
+    if (!this.chatHistory[mode]) {
+        // Add welcome message
+        this.addMessage(this.welcomeMessages[mode], 'bot');
+        
+        // Wait a bit before showing follow-up
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Add follow-up message
+        this.addMessage(this.followUpMessages[mode], 'bot');
+        
+        // Save to history
+        this.chatHistory[mode] = chatMessages.innerHTML;
+    } else {
+        // Load existing history
+        chatMessages.innerHTML = this.chatHistory[mode];
+    }
+}
 setLoading(isLoading) {
 const submitButton = document.querySelector('#loginForm button');
 const loadingSpinner = document.getElementById('loadingSpinner') || this.createLoadingSpinner();
@@ -478,6 +672,8 @@ if (isLoading) {
         return spinner;
     }
 }
+
+
 
 // Initialize widget when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

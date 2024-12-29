@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any
 class ChatRequest(BaseModel):
     user_id: str
     message: str
+    mode: str = 'support'  # default to support mode
 
 class ChatResponse(BaseModel):
     message: str
