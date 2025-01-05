@@ -1,8 +1,6 @@
 class SpotifyChatWidget {
     constructor() {
-        this.apiBaseUrl = window.location.hostname === 'localhost' 
-            ? 'http://localhost:8000'
-            : 'https://spotify-bot.azurewebsites.net';
+        this.apiBaseUrl = 'https://spotify-bot.azurewebsites.net';
         this.userId = null;
         this.oauthPopup = null;
         this.isAiMode = false;
@@ -11,7 +9,6 @@ class SpotifyChatWidget {
             ai: []
         };
         // Add mode persistence
-        this.restoreMode();
         // Add event listener for Enter key
         this.setupEnterKeyListener();
         this.currentMode = 'support';
@@ -77,21 +74,10 @@ class SpotifyChatWidget {
         }, 1000);
     }
 
-    restoreMode() {
-        // Restore previous mode from localStorage
-        const savedMode = localStorage.getItem('chatbotMode');
-        if (savedMode === 'ai') {
-            document.getElementById('chatModeToggle').checked = true;
-            this.currentMode = 'ai';
-            this.updateModeLabel('ai');
-        }
-    }
 
     handleModeToggle(checkbox) {
         const newMode = checkbox.checked ? 'ai' : 'support';
         
-        // Save mode to localStorage
-        localStorage.setItem('chatbotMode', newMode);
         
         // Clear chat messages
         const chatMessages = document.getElementById('chatMessages');
@@ -103,8 +89,15 @@ class SpotifyChatWidget {
         // Update mode label
         this.updateModeLabel(newMode);
         
-        // Add welcome message for the new mode
-        this.addMessage(this.welcomeMessages[newMode], 'bot');
+        // Only add welcome message if there's no history for this mode
+        if (!this.chatHistory[newMode] || this.chatHistory[newMode].length === 0) {
+            this.addMessage(this.welcomeMessages[newMode], 'bot');
+        } else {
+            // Display existing history for this mode
+            this.chatHistory[newMode].forEach(msg => {
+                this.displayMessage(msg.message, msg.type);
+            });
+        }
     }
 
     updateModeLabel(mode) {
@@ -531,13 +524,10 @@ showChatInterface() {
     document.getElementById('authForm').classList.remove('active');
     document.getElementById('chatInterface').classList.add('active');
     document.getElementById('messageInput').style.display = 'flex';
-
+    
     // Show initial messages if no history exists
-    if (this.chatHistory[this.currentMode].length === 0) {
+    if (!this.chatHistory[this.currentMode] || this.chatHistory[this.currentMode].length === 0) {
         this.addMessage(this.welcomeMessages[this.currentMode], 'bot');
-        setTimeout(() => {
-            this.addMessage(this.followUpMessages[this.currentMode], 'bot');
-        }, 500);
     } else {
         // Display existing history
         const chatMessages = document.getElementById('chatMessages');
@@ -594,19 +584,7 @@ form.insertBefore(errorDiv, form.firstChild);
 return errorDiv;
 }
 
-showChatInterface() {
-    document.getElementById('authForm').classList.remove('active');
-    document.getElementById('chatInterface').classList.add('active');
-    document.getElementById('messageInput').style.display = 'flex';
-    
-    // Show initial messages
-    this.showModeMessages(this.currentMode);
-    
-    const errorDiv = document.getElementById('authError');
-    if (errorDiv) {
-        errorDiv.style.display = 'none';
-    }
-}
+
 
 async showModeMessages(mode) {
     const chatMessages = document.getElementById('chatMessages');

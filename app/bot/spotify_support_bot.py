@@ -303,7 +303,7 @@ class SpotifySupportBot:
         }
         
         # Check if we need to ask about creating a support ticket
-        if (self.user_states[user_id]['frustration_count'] >= 3 and 
+        if (self.user_states[user_id]['frustration_count'] >= 4 and 
             user_id not in self.tickets_created and 
             user_id not in self.failed_ticket_attempts):
             

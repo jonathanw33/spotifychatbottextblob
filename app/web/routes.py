@@ -29,3 +29,7 @@ async def serve_widget_loader():
             "Cache-Control": "no-cache"
         }
     )
+    
+@router.get("/admin")
+async def admin_dashboard(request: Request):
+    return templates.TemplateResponse("admin.html", {"request": request})    

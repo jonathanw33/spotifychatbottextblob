@@ -2,7 +2,20 @@
 (function() {
     console.log('Widget loader starting...');
 
+    if (!window.MUSICMATE_API_KEY) {
+        console.error('MusicMate Widget Error: API key not found. Please set window.MUSICMATE_API_KEY before loading the widget.');
+        return;
+    }
+
+    
+
     const API_BASE_URL = 'https://spotify-bot.azurewebsites.net';
+    // const API_BASE_URL = 'http://localhost:8000';
+
+
+
+        // Add API key to all requests
+
 
     window.SpotifyWidget = window.SpotifyWidget || {};
 
@@ -50,9 +63,9 @@
             <div class="auth-form active" id="authForm">
                 <h3>Login or Sign Up</h3>
                 <div class="social-login">
-                    <button class="social-btn spotify-btn" onclick="window.SpotifyWidget.chatWidget.handleOAuthLogin('spotify')">
+                    <button class="social-btn spotify-btn" onclick="window.SpotifyWidget.chatWidget.handleOAuthLogin('google')">
                         <img src="/static/images/spotify-icon.svg" alt="Spotify" width="20" height="20">
-                        Continue with Spotify
+                        Continue with Spotify (Coming Soon)
                     </button>
                     <button class="social-btn google-btn" onclick="window.SpotifyWidget.chatWidget.handleOAuthLogin('google')">
                         <img src="/static/images/google-icon.svg" alt="Google" width="20" height="20">
@@ -590,9 +603,7 @@
     // Add widget JavaScript
     window.SpotifyWidget.ChatWidget = class {
         constructor() {
-            this.apiBaseUrl = window.location.hostname === 'localhost' 
-                ? 'http://localhost:8000'
-                : 'https://spotify-bot.azurewebsites.net';
+            this.apiBaseUrl = API_BASE_URL;
             this.userId = null;
             this.oauthPopup = null;
             this.isAiMode = false;
@@ -1265,11 +1276,27 @@
 
     // Initialize when DOM is ready
     function initializeWidget() {
-        if (!window.SpotifyWidget.chatWidget) {
-            document.body.appendChild(container);
-            window.SpotifyWidget.chatWidget = new window.SpotifyWidget.ChatWidget();
-            window.SpotifyWidget.initialized = true;
-        }
+        // Validate API key before initializing
+        fetch(`${API_BASE_URL}/api/v1/validate-key`, {
+            headers: {
+                'X-API-Key': window.MUSICMATE_API_KEY
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Invalid API key');
+            }
+            // Only initialize if API key is valid
+            if (!window.SpotifyWidget.chatWidget) {
+                document.body.appendChild(container);
+                window.SpotifyWidget.chatWidget = new window.SpotifyWidget.ChatWidget();
+                window.SpotifyWidget.initialized = true;
+            }
+        })
+        .catch(error => {
+            console.error('MusicMate Widget Error:', error);
+            // Don't initialize widget if key is invalid
+        });
     }
 
     if (document.readyState === 'loading') {

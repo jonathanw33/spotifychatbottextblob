@@ -1,11 +1,17 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, Header, Body
 from app.bot.models import ChatRequest, ChatResponse, AuthRequest, UserResponse
 from app.bot.spotify_support_bot import SpotifySupportBot
-from typing import Optional
+from typing import Optional, List
 from app.config import get_settings
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from app.bot.oauth_manager import OAuthManager
 from groq import Groq
+from pydantic import BaseModel
+from datetime import datetime
+import secrets
+from app.db import supabase  # Change this line
+
+
 
 router = APIRouter()
 bot = SpotifySupportBot()
@@ -31,8 +37,22 @@ try:
 except Exception as e:
     groq_client = None
 
+# Models
+class SiteRegistration(BaseModel):
+    site_url: str
+    site_name: str
+    owner_email: str
 
+class APIKeyResponse(BaseModel):
+    api_key: str
+    site_url: str
+    created_at: datetime
 
+# Middleware
+async def verify_admin_key(admin_key: str = Header(..., alias="X-Admin-Key")):
+    if admin_key != settings.ADMIN_KEY:
+        raise HTTPException(status_code=403, detail="Invalid admin key")
+    return admin_key
 
 @router.get("/auth/spotify")
 def spotify_login():
@@ -206,6 +226,72 @@ async def signin(request: AuthRequest):
         raise HTTPException(status_code=401, detail=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/register-site", response_model=APIKeyResponse)
+async def register_site(
+    site: SiteRegistration,
+    _: str = Depends(verify_admin_key)
+):
+    api_key = f"mk_{secrets.token_urlsafe(32)}"
+    
+    # Store in Supabase
+    result = supabase.table('authorized_sites').insert({
+        'site_url': site.site_url,
+        'site_name': site.site_name,
+        'owner_email': site.owner_email,
+        'api_key': api_key,
+        'created_at': datetime.utcnow().isoformat()
+    }).execute()
+    
+    return APIKeyResponse(
+        api_key=api_key,
+        site_url=site.site_url,
+        created_at=datetime.utcnow()
+    )
+
+@router.get("/sites", response_model=List[APIKeyResponse])
+async def list_sites(_: str = Depends(verify_admin_key)):
+    result = supabase.table('authorized_sites')\
+        .select('*')\
+        .order('created_at', desc=True)\
+        .execute()
+    
+    return result.data
+
+@router.post("/revoke-key")
+async def revoke_key(
+    api_key: str = Body(..., embed=True),
+    _: str = Depends(verify_admin_key)
+):
+    supabase.table('authorized_sites')\
+        .update({'active': False})\
+        .eq('api_key', api_key)\
+        .execute()
+    
+    return {"message": "API key revoked"}
+
+@router.get("/validate-key")
+async def validate_key(request: Request):
+    api_key = request.headers.get('X-API-Key')
+    print(f"Validating API key: {api_key}")
+    
+    if not api_key:
+        print("No API key found in headers")
+        raise HTTPException(status_code=401, detail="API key missing")
+
+    result = supabase.table('authorized_sites')\
+        .select('site_url')\
+        .eq('api_key', api_key)\
+        .eq('active', True)\
+        .execute()
+
+    print(f"Supabase result: {result.data}")
+
+    if not result.data:
+        print("No matching API key found in database")
+        raise HTTPException(status_code=403, detail="Invalid API key")
+
+    return {"valid": True}
 
 @router.get("/health")
 async def health_check():

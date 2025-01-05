@@ -5,7 +5,8 @@ class Settings(BaseSettings):
     # API Settings
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Spotify Support Bot"
-    
+    ADMIN_KEY: str  # Add this for admin authentication
+
     # Supabase Settings
     SUPABASE_URL: str
     SUPABASE_KEY: str

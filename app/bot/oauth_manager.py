@@ -19,6 +19,7 @@ class OAuthManager:
         self.google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
         self.redirect_uri = os.getenv("OAUTH_REDIRECT_URI")
         self.widget_url = os.getenv("WIDGET_URL", "http://localhost:8000/widget")     
+        self.base_url = "https://spotify-bot.azurewebsites.net"
 
 
     def initiate_spotify_login(self) -> str:
