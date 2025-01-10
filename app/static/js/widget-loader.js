@@ -53,7 +53,7 @@
 
     <div class="spotify-chat-widget">
         <div class="widget-header">
-            Spotify Support
+            SoundSolver
             <div class="widget-controls">
                 <button class="close-btn">×</button>
             </div>

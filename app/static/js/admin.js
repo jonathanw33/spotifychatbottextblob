@@ -1,14 +1,41 @@
-// Constants
-const ADMIN_KEY = 'somethingsomething';
+// Store admin key in session storage after verification
+let isAuthenticated = false;
 
-// Functions
+function checkAuth() {
+    const storedAuth = sessionStorage.getItem('adminAuthenticated');
+    if (storedAuth === 'true') {
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        isAuthenticated = true;
+        loadSites();
+    }
+}
+
+async function authenticate(adminKey) {
+    // Replace this with your actual admin key
+    const CORRECT_ADMIN_KEY = 'musicmateadmin';
+    
+    if (adminKey === CORRECT_ADMIN_KEY) {
+        // Store the actual admin key instead of just 'true'
+        sessionStorage.setItem('adminAuthenticated', adminKey);
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        isAuthenticated = true;
+        loadSites();
+    } else {
+        alert('Invalid admin key. Please try again.');
+    }
+}
+
 async function generateKey(formData) {
+    if (!isAuthenticated) return;
+    
     try {
-        const response = await fetch('/api/v1/register-site', {  // Updated path
+        const response = await fetch('/api/v1/register-site', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Admin-Key': ADMIN_KEY
+                'X-Admin-Key': sessionStorage.getItem('adminAuthenticated')
             },
             body: JSON.stringify({
                 site_url: formData.get('site_url'),
@@ -18,7 +45,6 @@ async function generateKey(formData) {
         });
         
         const data = await response.json();
-        console.log('Response:', data);  // Debug log
         if (data.api_key) {
             alert(`API Key generated: ${data.api_key}`);
             loadSites();
@@ -32,14 +58,15 @@ async function generateKey(formData) {
 }
 
 async function loadSites() {
+    if (!isAuthenticated) return;
+    
     try {
-        const response = await fetch('/api/v1/sites', {  // Updated path
+        const response = await fetch('/api/v1/sites', {
             headers: {
-                'X-Admin-Key': ADMIN_KEY
+                'X-Admin-Key': sessionStorage.getItem('adminAuthenticated')
             }
         });
         const sites = await response.json();
-        console.log('Sites:', sites);  // Debug log
         
         if (!Array.isArray(sites)) {
             console.error('Sites is not an array:', sites);
@@ -64,14 +91,16 @@ async function loadSites() {
 }
 
 async function revokeKey(apiKey) {
+    if (!isAuthenticated) return;
+    
     if (!confirm('Are you sure you want to revoke this key?')) return;
     
     try {
-        await fetch('/api/v1/revoke-key', {  // Updated path
+        await fetch('/api/v1/revoke-key', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Admin-Key': ADMIN_KEY
+                'X-Admin-Key': sessionStorage.getItem('adminAuthenticated')
             },
             body: JSON.stringify({ api_key: apiKey })
         });
@@ -84,12 +113,21 @@ async function revokeKey(apiKey) {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('generateKeyForm');
-    form.addEventListener('submit', async (e) => {
+    // Check authentication status
+    checkAuth();
+    
+    // Auth form listener
+    const authForm = document.getElementById('authForm');
+    authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const adminKey = document.getElementById('adminKeyInput').value;
+        await authenticate(adminKey);
+    });
+
+    // Generate key form listener
+    const generateKeyForm = document.getElementById('generateKeyForm');
+    generateKeyForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         await generateKey(new FormData(e.target));
     });
-
-    // Load sites on page load
-    loadSites();
 });

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MusicMate Documentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #121212;
+            color: white;
+            line-height: 1.6;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #121212, #1DB954);
+            opacity: 0.1;
+            animation: gradientBG 15s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientBG {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .doc-header {
+            text-align: center;
+            padding: 60px 0;
+        }
+
+        .doc-header h1 {
+            font-size: 3em;
+            color: #1DB954;
+            margin: 0;
+            text-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
+        }
+
+        .doc-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .doc-section h2 {
+            color: #1DB954;
+            border-bottom: 2px solid #1DB954;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            color: #1DB954;
+        }
+
+        .steps {
+            padding-left: 20px;
+        }
+
+        .steps li {
+            margin: 10px 0;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .home-button {
+            display: inline-block;
+            background: #1DB954;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .home-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(29, 185, 84, 0.1);
+        }
+
+        .code-block code {
+            display: block;
+            white-space: pre;
+            padding: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        /* Add syntax highlighting colors */
+        .code-block .keyword { color: #ff79c6; }
+        .code-block .string { color: #f1fa8c; }
+        .code-block .comment { color: #6272a4; }
+
+        .api-note {
+            background: rgba(29, 185, 84, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #1DB954;
+            margin-top: 20px;
+        }
+        
+        .steps {
+            margin: 20px 0;
+        }
+        
+        .steps li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .test-key-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .test-key {
+            background: rgba(29, 185, 84, 0.1);
+            padding: 15px;
+        }
+        
+        .test-note {
+            color: #ffd700;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <div class="container">
+        <div style="display: flex; gap: 20px;">
+            <a href="/" class="home-button">← Back to Home</a>
+            <a href="/docs" class="home-button">View Full API Reference →</a>
+        </div>
+
+        <div class="doc-header">
+            <h1>MusicMate ChatBot Integration Guide</h1>
+        </div>
+
+
+        <div class="doc-section">
+            <h2>Getting Started</h2>
+            <ol class="steps">
+                <li>Request an API key from our admin</li>
+                <li>Choose your integration method</li>
+                <li>Test the integration</li>
+            </ol>
+        </div>
+
+        <div class="doc-section">
+            <h2>Integration Methods</h2>
+            
+            <h3>Method 1: Script Injection (Recommended)</h3>
+            <p>The easiest way to add MusicMate to your website.</p>
+            
+            <h4>Requirements</h4>
+            <ul>
+                <li>Valid API key</li>
+                <li>Website with JavaScript enabled</li>
+            </ul>
+        
+            <h4>Steps</h4>
+            <ol class="steps">
+                <li>Add the API key script</li>
+                <li>Add the widget loader</li>
+                <li>That's it! The widget will appear automatically</li>
+            </ol>
+        
+            <div class="code-block">
+                <code>
+        &lt;script&gt;
+            window.MUSICMATE_API_KEY = 'your_api_key_here';
+        &lt;/script&gt;
+        &lt;script src="https://spotify-bot.azurewebsites.net/static/js/widget-loader.js"&gt;&lt;/script&gt;
+                </code>
+            </div>
+        
+            <h3>Method 2: API Only</h3>
+            <p>If you want to build your own UI, just use our API endpoint:</p>
+            
+            <h4>Setup Steps</h4>
+            <ol class="steps">
+                <li>Get your API key from admin</li>
+                <li>Send us your domain to add to CORS</li>
+                <li>Use this endpoint:</li>
+            </ol>
+        
+            <div class="code-block">
+                <code>
+        fetch('https://spotify-bot.azurewebsites.net/api/v1/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': 'your_api_key_here'
+            },
+            body: JSON.stringify({
+                user_id: 'any_user_id',
+                message: 'your message',
+                mode: 'support'  // or 'ai'
+            })
+        });
+                </code>
+            </div>
+
+            <div class="test-key-section">
+                <h4>Testing</h4>
+                <p>For development and testing purposes, you can use this API key:</p>
+                <div class="code-block test-key">
+                    <code>mk_1WsqTJZes3mZpiFHHjFyqvWYDpsMu9fou5crpbkarQ4</code>
+                </div>
+                <p class="test-note">⚠️ This key will only work on localhost:3000</p>
+            </div>
+        
+            <p class="api-note">That's it! The response will contain the chatbot's reply.</p>
+        </div>
+
+        <div class="doc-section">
+            <h2>Features</h2>
+            <div class="feature-list">
+                <div class="feature-card">
+                    <h3>Support Mode</h3>
+                    <ul>
+                        <li>Decision tree-based responses</li>
+                        <li>Sentiment analysis</li>
+                        <li>Automated support tickets</li>
+                        <li>Conversation history</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>AI Mode</h3>
+                    <ul>
+                        <li>Music recommendations</li>
+                        <li>Website context awareness</li>
+                        <li>Natural conversations</li>
+                        <li>Musical personality</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="doc-section">
+            <h2>Error Handling</h2>
+            <table>
+                <tr>
+                    <th>Error Code</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>401</td>
+                    <td>Missing API key</td>
+                </tr>
+                <tr>
+                    <td>403</td>
+                    <td>Invalid API key</td>
+                </tr>
+                <tr>
+                    <td>500</td>
+                    <td>Server error</td>
+                </tr>
+            </table>
+        </div>
+
+
+
+        <div class="doc-section">
+            <h2>FAQ</h2>
+            <h3>How do I get an API key?</h3>
+            <p>Contact our admin team to request an API key for your website.</p>
+            
+            <h3>Can I use both modes?</h3>
+            <p>Yes! The widget includes a toggle to switch between Support and AI modes.</p>
+            
+            <h3>Is there a rate limit?</h3>
+            <p>Currently no rate limits are implemented.</p>
+        </div>
+
+
+        <div style="display: flex; gap: 20px;">
+            <a href="/" class="home-button">← Back to Home</a>
+            <a href="/docs" class="home-button">View Full API Reference →</a>
+        </div>
+    </div>
+</body>
+</html>

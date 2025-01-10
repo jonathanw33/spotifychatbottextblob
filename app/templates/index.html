@@ -36,7 +36,7 @@
 
         /* Animated Background */
         .animated-bg {
-            position: absolute;
+            position: fixed; /* Changed from absolute to fixed */
             top: 0;
             left: 0;
             width: 100%;
@@ -44,6 +44,7 @@
             background: linear-gradient(45deg, #121212, #1DB954);
             opacity: 0.1;
             animation: gradientBG 15s ease infinite;
+            z-index: -1;
         }
 
         @keyframes gradientBG {
@@ -180,6 +181,128 @@
             from { width: 0; }
             to { width: 75%; }
         }
+
+        .services {
+            margin-top: 60px;
+        }
+        
+        .service-group {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .service-group h2 {
+            color: #1DB954;
+            margin-bottom: 20px;
+        }
+
+        .documentation-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 20px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .documentation-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .button-group {
+            margin-top: 40px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    
+        .primary-button {
+            background: #1DB954;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 30px rgba(29, 185, 84, 0.5);
+        }
+    
+        .secondary-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+        }
+    
+        .primary-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(29, 185, 84, 0.7);
+        }
+    
+        .secondary-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+    
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    
+        .celebration-section {
+            background: rgba(29, 185, 84, 0.1);
+            border-radius: 15px;
+            padding: 40px;
+            margin: 60px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+    
+        .celebration-section h2 {
+            color: #1DB954;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+    
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+            animation: confettiFall 5s linear infinite;
+        }
+    
+        @keyframes confettiFall {
+            0% { transform: translateY(-100px); opacity: 1; }
+            100% { transform: translateY(500px); opacity: 0; }
+        }
+    
+        /* Add celebration emoji animation */
+        .celebration-emoji {
+            font-size: 2em;
+            display: inline-block;
+            margin: 0 10px;
+            animation: bounce 2s infinite;
+        }
+    
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
     </style>
 </head>
 <body>
@@ -191,39 +314,72 @@
             <div class="floating-icon" style="top: 70%; left: 80%">🤖</div>
             <div class="floating-icon" style="top: 40%; left: 60%">💬</div>
             <div class="floating-icon" style="top: 80%; left: 30%">🎧</div>
+            <div class="floating-icon" style="top: 60%; left: 40%">🍳</div>
+            <div class="floating-icon" style="top: 30%; left: 70%">🎨</div>
         </div>
         <div class="hero-content">
-            <h1>Spotify Support <span class="spotify-green">Chatbot</span></h1>
-            <p>Next-Generation Customer Support powered by AI</p>
-            <a href="/widget" class="cta-button">Experience It Now</a>
+            <h1>Spotify <span class="spotify-green">AI Assistant</span></h1>
+            <p>Discover Your Musical Aura & More</p>
+            <div class="button-group">
+                <a href="/aura" class="primary-button">✨ Experience Musical Aura</a>
+                <a href="/widget" class="secondary-button">💬 Try Chatbot</a>
+                <a href="/admin" class="secondary-button">⚙️ Admin Dashboard</a>
+                <a href="/documentation" class="secondary-button">📚 Documentation</a>
+                <a href="https://docs.google.com/document/d/1-0P52fPqfJHM3879ttKVKLSNrImcztTVOIYX5G8z22A/edit?tab=t.0" target="_blank" class="secondary-button">📄 View Docs</a>
+
+            </div>
         </div>
     </div>
 
     <div class="container">
-        <div class="features">
-            <div class="feature-card">
-                <h3>🧠 AI-Powered Understanding</h3>
-                <p>Using state-of-the-art NLP models to understand user intent and emotions</p>
+        <div class="services">
+            <div class="service-group">
+                <h2>Dual-Mode Chatbot</h2>
+                <div class="features">
+                    <div class="feature-card">
+                        <h3>🎯 Support Mode</h3>
+                        <p>Smart decision tree system with sentiment analysis and automated ticket management powered by sentence transformers</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎵 AI Mode</h3>
+                        <p>GROQ-powered conversational AI with deep musical knowledge and context-aware responses</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔐 Authentication</h3>
+                        <p>Secure API key management and easy widget deployment with cross-domain support</p>
+                    </div>
+                </div>
             </div>
-            <div class="feature-card">
-                <h3>📊 Smart Analysis</h3>
-                <p>TextBlob and Sentence Transformers working together for precise response matching</p>
-            </div>
-            <div class="feature-card">
-                <h3>🎯 Adaptive Responses</h3>
-                <p>Intelligently adjusts to user frustration levels and provides empathetic support</p>
+
+            <div class="service-group">
+                <h2>Musical Aura & Recipe Matcher</h2>
+                <div class="features">
+                    <div class="feature-card">
+                        <h3>🎨 Mood Visualization</h3>
+                        <p>Dynamic particle system that responds to musical moods and creates immersive visual experiences</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🍳 Recipe Generation</h3>
+                        <p>AI-powered system that converts musical moods into unique culinary experiences</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎥 Media Integration</h3>
+                        <p>Seamless YouTube playback and mood history tracking for a complete multi-sensory experience</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="progress-section">
-            <h2>Development Progress</h2>
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
-            </div>
-            <p>Expected completion: January 8, 2025</p>
+        <div class="celebration-section">
+            <h2>🎉 We've Launched! 🎉</h2>
+            <p class="celebration-emoji">🎵</p>
+            <p class="celebration-emoji">🤖</p>
+            <p class="celebration-emoji">✨</p>
+            <p class="celebration-emoji">🎨</p>
+            <p>Our AI-powered musical journey is now ready for you to explore!</p>
+            <p style="margin-top: 20px; font-size: 1.2em;">Join thousands of users discovering their Musical Aura</p>
         </div>
     </div>
     <script src="{{ url_for('static', path='/js/landing.js') }}"></script>
-
 </body>
 </html>

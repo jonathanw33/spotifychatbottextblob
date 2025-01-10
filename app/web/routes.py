@@ -36,4 +36,8 @@ async def admin_dashboard(request: Request):
 
 @router.get("/aura")
 async def admin_dashboard(request: Request):
-    return templates.TemplateResponse("musicalaura.html", {"request": request})    
+    return templates.TemplateResponse("musicalaura.html", {"request": request})
+
+@router.get("/documentation")
+async def admin_dashboard(request: Request):
+    return templates.TemplateResponse("documentation.html", {"request": request})     

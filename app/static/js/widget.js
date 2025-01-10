@@ -156,30 +156,6 @@ class SpotifyChatWidget {
         });
 
         // Minimize button
-        document.querySelector('.minimize-btn').addEventListener('click', () => {
-            const widget = document.querySelector('.spotify-chat-widget');
-            const content = document.querySelector('.widget-content');
-            const messageInput = document.querySelector('.message-input');
-            
-            if (widget.style.height === '40px') {
-                widget.style.height = '500px';
-                setTimeout(() => {
-                    content.style.display = 'block';
-                    if (this.userId) messageInput.style.display = 'flex';
-                }, 50);
-            } else {
-                widget.style.height = '40px';
-                content.style.opacity = '0';
-                messageInput.style.opacity = '0';
-                
-                setTimeout(() => {
-                    content.style.display = 'none';
-                    messageInput.style.display = 'none';
-                    content.style.opacity = '1';
-                    messageInput.style.opacity = '1';
-                }, 200);
-            }
-        });
 
         // Close button
         document.querySelector('.close-btn').addEventListener('click', () => {
