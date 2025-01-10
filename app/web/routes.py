@@ -33,3 +33,7 @@ async def serve_widget_loader():
 @router.get("/admin")
 async def admin_dashboard(request: Request):
     return templates.TemplateResponse("admin.html", {"request": request})    
+
+@router.get("/aura")
+async def admin_dashboard(request: Request):
+    return templates.TemplateResponse("musicalaura.html", {"request": request})    

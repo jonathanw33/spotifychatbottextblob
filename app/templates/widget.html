@@ -485,10 +485,150 @@
         .mode-switching .chat-interface {
             animation: modeSwitch 0.3s ease;
         }
+
+        .spotify-instructions-guide {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            font-family: 'Circular', 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        .spotify-instructions-title {
+            color: #191414;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+        }
+        
+        .spotify-instruction-card {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .spotify-instruction-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .spotify-instruction-number {
+            background: #1DB954;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        
+        .spotify-instruction-content {
+            color: #191414;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .spotify-instruction-example {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-family: monospace;
+            color: #191414;
+        }
+        
+        @media (max-width: 600px) {
+            .spotify-instructions-guide {
+                padding: 10px;
+            }
+            
+            .spotify-instructions-title {
+                font-size: 2rem;
+            }
+            
+            .spotify-instruction-card {
+                padding: 15px;
+            }
+            
+            .spotify-instruction-content {
+                font-size: 1rem;
+            }
+        }
                 
     </style>
 </head>
 <body>
+
+    <div class="spotify-instructions-guide">
+        <h1 class="spotify-instructions-title">Try out the Spotify Support Chatbot!</h1>
+        <div class="spotify-instruction-card">
+            <div class="spotify-instruction-number">1</div>
+            <div class="spotify-instruction-content">
+                Start with a simple login issue query:<br>
+                <span class="spotify-instruction-example">"I am having login issue"</span>
+            </div>
+        </div>
+        
+        <div class="spotify-instruction-card">
+            <div class="spotify-instruction-number">2</div>
+            <div class="spotify-instruction-content">
+                Try the same query but with more intensity:'This will give different response because the decision tree have 2 sub-branches for each problems, 1 for when the system detects that the user is calm, another one for frustrated user<br>
+                <span class="spotify-instruction-example">"I AM HAVING LOGIN ISSUE!"</span>
+            </div>
+        </div>
+        
+        <div class="spotify-instruction-card">
+            <div class="spotify-instruction-number">3</div>
+            <div class="spotify-instruction-content">
+                Ready for some AI chat? Toggle the chat type switch at the top of the chatbot
+            </div>
+        </div>
+        
+        <div class="spotify-instruction-card">
+            <div class="spotify-instruction-number">4</div>
+            <div class="spotify-instruction-content">
+                Chat freely about music! Ask for recommendations, discuss artists, or share your favorite songs
+            </div>
+        </div>
+        
+        <div class="spotify-instruction-card">
+            <div class="spotify-instruction-number">5</div>
+            <div class="spotify-instruction-content">
+                Switch back to the decision tree chatbot mode
+            </div>
+        </div>
+        
+        <div class="spotify-instruction-card">
+            <div class="spotify-instruction-number">6</div>
+            <div class="spotify-instruction-content">
+                Let's try the email feature! Express your frustration three times : Easiest way is just to curse at the chatbot :D
+            </div>
+        </div>
+        
+        <div class="spotify-instruction-card">
+            <div class="spotify-instruction-number">7</div>
+            <div class="spotify-instruction-content">
+                Press 1 when prompted
+            </div>
+        </div>
+        
+        <div class="spotify-instruction-card">
+            <div class="spotify-instruction-number">8</div>
+            <div class="spotify-instruction-content">
+                Watch as an email is sent to support (demo version sends to developer)
+            </div>
+        </div>
+    </div>
+
     <div id="widget-opener" style="display: none;">
         <button class="open-widget-btn">
             Need help?
@@ -499,7 +639,6 @@
         <div class="widget-header">
             Spotify Support
             <div class="widget-controls">
-                <button class="minimize-btn">_</button>
                 <button class="close-btn">×</button>
             </div>
         </div>

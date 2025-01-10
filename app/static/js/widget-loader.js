@@ -55,7 +55,6 @@
         <div class="widget-header">
             Spotify Support
             <div class="widget-controls">
-                <button class="minimize-btn">_</button>
                 <button class="close-btn">×</button>
             </div>
         </div>
@@ -64,11 +63,9 @@
                 <h3>Login or Sign Up</h3>
                 <div class="social-login">
                     <button class="social-btn spotify-btn" onclick="window.SpotifyWidget.chatWidget.handleOAuthLogin('google')">
-                        <img src="/static/images/spotify-icon.svg" alt="Spotify" width="20" height="20">
                         Continue with Spotify (Coming Soon)
                     </button>
                     <button class="social-btn google-btn" onclick="window.SpotifyWidget.chatWidget.handleOAuthLogin('google')">
-                        <img src="/static/images/google-icon.svg" alt="Google" width="20" height="20">
                         Continue with Google
                     </button>
                 </div>
@@ -763,31 +760,6 @@
                 }
             });
     
-            // Minimize button
-            document.querySelector('.minimize-btn').addEventListener('click', () => {
-                const widget = document.querySelector('.spotify-chat-widget');
-                const content = document.querySelector('.widget-content');
-                const messageInput = document.querySelector('.message-input');
-                
-                if (widget.style.height === '40px') {
-                    widget.style.height = '500px';
-                    setTimeout(() => {
-                        content.style.display = 'block';
-                        if (this.userId) messageInput.style.display = 'flex';
-                    }, 50);
-                } else {
-                    widget.style.height = '40px';
-                    content.style.opacity = '0';
-                    messageInput.style.opacity = '0';
-                    
-                    setTimeout(() => {
-                        content.style.display = 'none';
-                        messageInput.style.display = 'none';
-                        content.style.opacity = '1';
-                        messageInput.style.opacity = '1';
-                    }, 200);
-                }
-            });
     
             // Close button
             document.querySelector('.close-btn').addEventListener('click', () => {
