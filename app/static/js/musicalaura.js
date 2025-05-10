@@ -230,7 +230,7 @@ async function analyzeMusicMood() {
 
         // Call your friend's recipe API
         const recipeResponse = await axios.post(
-            'https://smart-health-tst.up.railway.app/api/recipes',
+            'https://smart-health.up.railway.app/api/recipes',
             { ingredients },
             {
                 headers: {
